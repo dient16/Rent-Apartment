@@ -1,35 +1,35 @@
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const to = require('await-to-js').default;
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+const to = require("await-to-js").default;
 
 const generateToken = () => {
-    return crypto.randomBytes(20).toString('hex');
+	return crypto.randomBytes(20).toString("hex");
 };
 const sendMail = async ({ email, html, subject }) => {
-    let transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-            user: process.env.EMAIL_NAME,
-            pass: process.env.EMAIL_APP_PASSWORD,
-        },
-    });
+	const transporter = nodemailer.createTransport({
+		host: "smtp.gmail.com",
+		port: 587,
+		secure: false,
+		auth: {
+			user: process.env.EMAIL_NAME,
+			pass: process.env.EMAIL_APP_PASSWORD,
+		},
+	});
 
-    let [error, info] = await to(
-        transporter.sendMail({
-            from: '"Rent Apartment" <no-relply@rentapartment.com>',
-            to: email,
-            subject: subject,
-            html: html,
-        }),
-    );
-    if (error) {
-        throw error;
-    }
-    return info;
+	const [error, info] = await to(
+		transporter.sendMail({
+			from: '"Rent Apartment" <no-relply@rentapartment.com>',
+			to: email,
+			subject: subject,
+			html: html,
+		}),
+	);
+	if (error) {
+		throw error;
+	}
+	return info;
 };
 module.exports = {
-    generateToken,
-    sendMail,
+	generateToken,
+	sendMail,
 };

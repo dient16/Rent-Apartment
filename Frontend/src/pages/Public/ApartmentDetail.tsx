@@ -117,17 +117,27 @@ const ApartmentDetail: React.FC = () => {
                 onSubmit={handleSubmit(handleBooking)}
                 className="max-w-main w-full flex flex-col justify-center gap-5"
             >
-                <div className="grid grid-cols-4 grid-rows-4 gap-2 mt-10 w-full max-h-[500px] lg:min-h-[450px] overflow-hidden relative">
+                <div className="grid grid-cols-4 grid-rows-4 gap-3 mt-10 w-full max-h-[400px] lg:min-h-[300px] overflow-hidden relative">
                     <div className="col-span-2 row-span-4">
-                        <Image className="rounded-s-lg" height="100%" width="100%" src={rooms[0]?.images[0]} />
+                        <div className="rounded-2xl overflow-hidden w-full h-full">
+                            <Image src={rooms[0]?.images[0]} />
+                        </div>
                     </div>
-                    <div className="flex col-span-2 row-span-2 gap-2">
-                        <Image className="" height="100%" width="50%" src={rooms[0]?.images[1]} />
-                        <Image className="" height="100%" width="50%" src={rooms[0]?.images[2]} />
+                    <div className="flex col-span-2 row-span-2 gap-3">
+                        <div className="rounded-2xl overflow-hidden w-1/2 h-full">
+                            <Image src={rooms[0]?.images[1]} />
+                        </div>
+                        <div className="rounded-2xl overflow-hidden w-1/2 h-full">
+                            <Image src={rooms[0]?.images[2]} />
+                        </div>
                     </div>
-                    <div className="flex col-span-2 row-span-2 gap-2">
-                        <Image className="rounded-tr-md" height="100%" width="50%" src={rooms[0]?.images[3]} />
-                        <Image className="rounded-br-md" height="100%" width="50%" src={rooms[0]?.images[4]} />
+                    <div className="flex col-span-2 row-span-2 gap-3">
+                        <div className="rounded-2xl overflow-hidden w-1/2 h-full">
+                            <Image src={rooms[0]?.images[3]} />
+                        </div>
+                        <div className="rounded-2xl overflow-hidden w-1/2 h-full">
+                            <Image src={rooms[0]?.images[4]} />
+                        </div>
                     </div>
                     <Drawer placement="bottom" onClose={() => setIsShowAll(false)} open={isShowAll} height="100%">
                         <div className="flex flex-col justify-center">
