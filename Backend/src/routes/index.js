@@ -4,19 +4,21 @@ const serviceRouter = require("./service");
 const imageRouter = require("./image");
 const apartmentRouter = require("./apartment");
 const bookingRouter = require("./booking");
+const swaggerRouter = require("./swagger");
 
 const { notFound, errHandler } = require("../middlewares/errorHandler");
 
 const initRoutes = (app) => {
-	app.use("/api/auth", authRouter);
-	app.use("/api/user", userRouter);
-	app.use("/api/service", serviceRouter);
-	app.use("/api/image", imageRouter);
-	app.use("/api/apartment", apartmentRouter);
-	app.use("/api/booking", bookingRouter);
+  app.use("/api/auth", authRouter);
+  app.use("/api/user", userRouter);
+  app.use("/api/service", serviceRouter);
+  app.use("/api/image", imageRouter);
+  app.use("/api/apartment", apartmentRouter);
+  app.use("/api/booking", bookingRouter);
+  app.use("/api-docs", swaggerRouter);
 
-	app.use(notFound);
-	app.use(errHandler);
+  app.use(notFound);
+  app.use(errHandler);
 };
 
 module.exports = initRoutes;
