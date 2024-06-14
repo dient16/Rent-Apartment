@@ -2,6 +2,7 @@ const User = require("../models/user.model");
 const { default: to } = require("await-to-js");
 const mongoose = require("mongoose");
 const Apartment = require("../models/apartment.model");
+const Room = require("../models/room.model");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const getAllApartment = async (req, res, next) => {
@@ -200,22 +201,28 @@ const createApartment = async (req, res, next) => {
   try {
     const { title, rooms, location } = req.body;
     const { _id: createBy } = req.user;
-    const roomsInApartment = rooms.map((room, index) => {
-      const fieldName = `rooms[${index}][images]`;
 
+    const roomPromises = rooms.map(async (room, index) => {
+      const fieldName = `rooms[${index}][images]`;
       const roomImages =
         req.files.filter((image) => image.fieldname === fieldName) || [];
-
       const images = roomImages.map((file) => file?.filename);
 
-      return {
+      const services = room.services.map(
+        (service) => new mongoose.Types.ObjectId(service),
+      );
+
+      const newRoom = await Room.create({
         ...room,
         images,
-        services: room.services.map(
-          (service) => new mongoose.Types.ObjectId(service),
-        ),
-      };
+        services,
+        apartmentId: null, // Will be set later
+      });
+
+      return newRoom._id;
     });
+
+    const roomIds = await Promise.all(roomPromises);
 
     let newApartment;
     let err;
@@ -225,7 +232,7 @@ const createApartment = async (req, res, next) => {
         title,
         createBy,
         location,
-        rooms: roomsInApartment,
+        rooms: roomIds,
       }),
     );
 
@@ -236,34 +243,55 @@ const createApartment = async (req, res, next) => {
       });
     }
 
-    let updateUser;
+    await Room.updateMany(
+      { _id: { $in: roomIds } },
+      { $set: { apartmentId: newApartment._id } },
+    );
 
+    let updateUser;
     [err, updateUser] = await to(
       User.findByIdAndUpdate(
         createBy,
-        {
-          $push: { createApartments: newApartment._id },
-        },
+        { $push: { createApartments: newApartment._id } },
         { new: true },
       ),
     );
-    const response = await newApartment.populate({
-      path: "rooms.services",
-    });
-    if (updateUser) {
-      return res.status(200).json({
-        success: true,
-        message: "Apartment created successfully",
-        data: {
-          response,
-        },
+
+    if (err || !updateUser) {
+      return res.status(500).json({
+        success: false,
+        message: "Error updating user with new apartment",
       });
     }
+
+    const populatedRooms = await Room.find({ _id: { $in: roomIds } }).populate(
+      "services",
+    );
+
+    populatedRooms.forEach(async (room) => {
+      room.apartmentId = newApartment._id;
+      await room.save();
+    });
+
+    const response = {
+      _id: newApartment._id,
+      title: newApartment.title,
+      location: newApartment.location,
+      createBy: newApartment.createBy,
+      rooms: populatedRooms,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Apartment created successfully",
+      data: {
+        apartment: response,
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
-
 const searchApartments = async (req, res, next) => {
   try {
     const {
@@ -279,6 +307,7 @@ const searchApartments = async (req, res, next) => {
       min_price,
       max_price,
     } = req.query;
+
     const parsedStartDay = new Date(start_date);
     const parsedEndDay = new Date(end_date);
     const page = Number.parseInt(req.query.page, 10) || 1;
@@ -287,6 +316,7 @@ const searchApartments = async (req, res, next) => {
     const maxPrice = Number.parseInt(max_price, 10) || 1000000000;
     const skip = (page - 1) * limit;
     const today = new Date(Date.now()).setHours(0, 0, 0, 0);
+
     if (parsedStartDay < today || parsedEndDay < today) {
       return res.status(400).json({
         success: false,
@@ -297,18 +327,11 @@ const searchApartments = async (req, res, next) => {
 
     const parsedNumberOfGuest = Number.parseInt(number_of_guest, 10) || 1;
     const parsedQuantity = Number.parseInt(room_number, 10) || 1;
-    const textSearchString = `${province} ${district} ${ward} ${street} ${name}`;
 
-    const initialMatch = {
-      $match: {
-        $text: { $search: textSearchString },
-      },
-    };
-
-    const query = {
-      "rooms.numberOfGuest": { $gte: parsedNumberOfGuest },
-      "rooms.quantity": { $gte: parsedQuantity },
-      "rooms.unavailableDateRanges": {
+    const roomQuery = {
+      numberOfGuest: { $gte: parsedNumberOfGuest },
+      quantity: { $gte: parsedQuantity },
+      unavailableDateRanges: {
         $not: {
           $elemMatch: {
             startDay: { $lte: parsedEndDay },
@@ -316,6 +339,33 @@ const searchApartments = async (req, res, next) => {
           },
         },
       },
+      price: { $gte: minPrice, $lte: maxPrice },
+    };
+
+    const [roomError, rooms] = await to(
+      Room.find(roomQuery).populate("services").exec(),
+    );
+    if (roomError) {
+      console.log(roomError);
+      return res.status(500).json({
+        success: false,
+        message: "Error searching rooms",
+      });
+    }
+
+    const apartmentIds = [...new Set(rooms.map((room) => room.apartmentId))];
+
+    const textSearchString =
+      `${province || ""} ${district || ""} ${ward || ""} ${street || ""} ${name || ""}`.trim();
+
+    const initialMatch = {
+      $match: {
+        _id: { $in: apartmentIds },
+        ...(textSearchString && { $text: { $search: textSearchString } }),
+      },
+    };
+
+    const query = {
       "rooms.price": { $gte: minPrice, $lte: maxPrice },
     };
 
@@ -325,22 +375,20 @@ const searchApartments = async (req, res, next) => {
         {
           $facet: {
             paginatedResult: [
+              {
+                $lookup: {
+                  from: "rooms",
+                  localField: "_id",
+                  foreignField: "apartmentId",
+                  as: "rooms",
+                },
+              },
               { $unwind: "$rooms" },
               { $match: query },
               {
-                $lookup: {
-                  from: "services",
-                  localField: "rooms.services",
-                  foreignField: "_id",
-                  as: "rooms.services",
-                },
-              },
-              {
                 $group: {
                   _id: "$_id",
-                  roomPriceMin: {
-                    $min: "$rooms.price",
-                  },
+                  roomPriceMin: { $min: "$rooms.price" },
                   roomId: { $first: "$rooms._id" },
                   title: { $first: "$title" },
                   location: { $first: "$location" },
@@ -354,7 +402,7 @@ const searchApartments = async (req, res, next) => {
               {
                 $project: {
                   _id: 1,
-                  roomId: "$roomId",
+                  roomId: 1,
                   name: "$title",
                   address: {
                     street: "$location.street",
@@ -365,39 +413,33 @@ const searchApartments = async (req, res, next) => {
                   image: {
                     $concat: [
                       `${process.env.SERVER_URL}/api/image/`,
-                      {
-                        $arrayElemAt: [{ $ifNull: ["$images", []] }, 0],
-                      },
+                      { $arrayElemAt: [{ $ifNull: ["$images", []] }, 0] },
                     ],
                   },
                   price: "$roomPriceMin",
-                  numberOfGuest: "$numberOfGuest",
-                  quantity: "$quantity",
+                  numberOfGuest: 1,
+                  quantity: 1,
                   services: {
                     $slice: ["$services.title", 3],
                   },
-
                   rating: {
-                    ratingAgv: {
+                    ratingAvg: {
                       $cond: {
                         if: {
-                          $gt: [
-                            {
-                              $size: {
-                                $ifNull: ["$reviews", []],
-                              },
-                            },
-                            0,
-                          ],
+                          $gt: [{ $size: { $ifNull: ["$reviews", []] } }, 0],
                         },
-                        then: {
-                          $avg: "$reviews.score",
-                        },
+                        then: { $avg: "$reviews.score" },
                         else: 0,
                       },
                     },
                     totalRating: {
-                      $sum: { $ifNull: ["$reviews.score", 0] },
+                      $cond: {
+                        if: {
+                          $gt: [{ $size: { $ifNull: ["$reviews", []] } }, 0],
+                        },
+                        then: { $sum: "$reviews.score" },
+                        else: 0,
+                      },
                     },
                   },
                 },
@@ -411,19 +453,18 @@ const searchApartments = async (req, res, next) => {
               {
                 $group: {
                   _id: "$_id",
-                  roomPriceMin: {
-                    $min: "$rooms.price",
-                  },
+                  roomPriceMin: { $min: "$rooms.price" },
                 },
               },
               { $count: "totalCount" },
             ],
           },
         },
-      ]),
+      ]).exec(),
     );
 
     if (error) {
+      console.log(error);
       return res.status(500).json({
         success: false,
         message: "Error searching apartments",
@@ -431,8 +472,7 @@ const searchApartments = async (req, res, next) => {
     }
 
     const { paginatedResult, totalCount } = aggregateResult[0];
-    const totalResults =
-      totalCount && totalCount.length > 0 ? totalCount[0].totalCount : 0;
+    const totalResults = totalCount.length > 0 ? totalCount[0].totalCount : 0;
 
     return res.status(200).json({
       success: true,
@@ -448,7 +488,6 @@ const searchApartments = async (req, res, next) => {
     next(error);
   }
 };
-
 const updateApartment = async (req, res, next) => {
   try {
     const { apartmentId } = req.params;
