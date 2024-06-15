@@ -8,7 +8,6 @@ extendZodWithOpenApi(z);
 const COLLECTION = 'apartments';
 const DOCUMENT = 'Apartment';
 
-// Định nghĩa schema Zod
 export const apartmentSchema = z.object({
   title: z.string(),
   location: z.object({
@@ -19,16 +18,15 @@ export const apartmentSchema = z.object({
     ward: z.string().optional(),
     street: z.string(),
   }),
-  createBy: z.string(), // Assuming ObjectId will be passed as a string
-  rooms: z.array(z.string()).optional(), // Assuming ObjectId will be passed as a string
+  createBy: z.string(),
+  rooms: z.array(z.string()).optional(),
   images: z.array(z.string()),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
 
-export type Apartment = z.infer<typeof apartmentSchema>;
+export type IApartment = z.infer<typeof apartmentSchema>;
 
-// Định nghĩa schema Mongoose
 const apartmentMongooseSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -60,6 +58,6 @@ apartmentMongooseSchema.index({
   'location.street': 'text',
 });
 
-const ApartmentModel = mongoose.model<Apartment & Document>(DOCUMENT, apartmentMongooseSchema, COLLECTION);
+const ApartmentModel = mongoose.model<IApartment & Document>(DOCUMENT, apartmentMongooseSchema, COLLECTION);
 
 export default ApartmentModel;
