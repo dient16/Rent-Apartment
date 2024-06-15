@@ -14,8 +14,7 @@ import rateLimiter from '@/common/middleware/rateLimiter';
 import requestLogger from '@/common/middleware/requestLogger';
 import { env } from '@/common/utils/envConfig';
 import passport from '@/config/passport.config';
-
-import initRoutes from './routes';
+import initRoutes from '@/routes';
 
 const logger = pino({ name: 'server start' });
 const app: Express = express();
@@ -39,7 +38,6 @@ app.use(requestLogger);
 
 // Routes
 app.use('/health-check', healthCheckRouter);
-// app.use('/users', userRouter);
 initRoutes(app);
 app.use(passport.initialize());
 // Swagger UI

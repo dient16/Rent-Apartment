@@ -8,7 +8,7 @@ extendZodWithOpenApi(z);
 const COLLECTION: string = 'bookings';
 const DOCUMENT: string = 'Booking';
 
-export const bookingSchema = z.object({
+export const BookingSchema = z.object({
   email: z.string().email(),
   firstname: z.string(),
   lastname: z.string(),
@@ -21,8 +21,14 @@ export const bookingSchema = z.object({
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
+export const GetBookingSchema = z.object({
+  bookingId: z.string(),
+});
 
-export type Booking = z.infer<typeof bookingSchema>;
+export const GetBookingsSchema = z.object({
+  userId: z.string(),
+});
+export type IBooking = z.infer<typeof BookingSchema>;
 
 const bookingMongooseSchema = new mongoose.Schema(
   {
@@ -45,6 +51,6 @@ const bookingMongooseSchema = new mongoose.Schema(
   }
 );
 
-const BookingModel = mongoose.model<Booking & Document>(DOCUMENT, bookingMongooseSchema, COLLECTION);
+const BookingModel = mongoose.model<IBooking & Document>(DOCUMENT, bookingMongooseSchema, COLLECTION);
 
 export default BookingModel;
