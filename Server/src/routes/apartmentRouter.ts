@@ -18,7 +18,6 @@ apartmentRegistry.registerPath({
   method: 'post',
   path: '/api/apartment',
   tags: ['Apartment'],
-  security: [{ bearerauth: [] }],
   request: {
     body: {
       content: {
@@ -60,7 +59,6 @@ apartmentRegistry.registerPath({
   method: 'get',
   path: '/api/apartment/by-user',
   tags: ['Apartment'],
-  security: [{ bearerauth: [] }],
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
@@ -70,7 +68,6 @@ apartmentRegistry.registerPath({
   method: 'get',
   path: '/api/apartment',
   tags: ['Apartment'],
-  security: [{ bearerauth: [] }],
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
@@ -94,7 +91,6 @@ apartmentRegistry.registerPath({
   method: 'put',
   path: '/api/apartment/:apartmentId',
   tags: ['Apartment'],
-  security: [{ bearerauth: [] }],
   request: {
     params: z.object({
       apartmentId: z.string(),
@@ -116,7 +112,6 @@ apartmentRegistry.registerPath({
   method: 'delete',
   path: '/api/apartment/:apartmentId',
   tags: ['Apartment'],
-  security: [{ bearerauth: [] }],
   request: {
     params: z.object({
       apartmentId: z.string(),
@@ -131,7 +126,6 @@ apartmentRegistry.registerPath({
   method: 'delete',
   path: '/api/apartment/room/:roomId',
   tags: ['Apartment'],
-  security: [{ bearerauth: [] }],
   request: {
     params: z.object({
       roomId: z.string(),

@@ -35,7 +35,7 @@ export const UserSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-export type User = z.infer<typeof UserSchema>;
+export type IUser = z.infer<typeof UserSchema>;
 
 const userMongooseSchema = new mongoose.Schema(
   {
@@ -104,7 +104,6 @@ const UserModel = mongoose.model<User & Document>(DOCUMENT, userMongooseSchema, 
 
 export default UserModel;
 
-// Input validation for 'get users/:id' endpoint
-export const getUserSchema = z.object({
+export const putUserSchema = z.object({
   params: z.object({ id: commonValidations.id }),
 });

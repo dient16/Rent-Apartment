@@ -4,12 +4,12 @@ import path from 'node:path';
 import multer from 'multer';
 import { GridFsStorage } from 'multer-gridfs-storage';
 
-import { env } from '../utils/envConfig';
+import { env } from '@/common/utils/envConfig';
 
 const { MONGODB_URL } = env;
 const storage = new GridFsStorage({
   url: MONGODB_URL,
-  file: (req, file) => {
+  file: (_req, file) => {
     return new Promise((resolve, reject) => {
       crypto.randomBytes(16, (err, buf) => {
         if (err) {

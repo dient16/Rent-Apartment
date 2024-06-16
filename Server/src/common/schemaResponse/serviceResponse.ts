@@ -1,20 +1,20 @@
 import { z } from 'zod';
 
 export enum ResponseStatus {
-  Success,
-  Failed,
+  Success = 1,
+  Failed = 0,
 }
 
 export class ServiceResponse<T = null> {
   success: boolean;
   message: string;
-  responseObject: T;
+  data: T;
   statusCode: number;
 
   constructor(status: ResponseStatus, message: string, responseObject: T, statusCode: number) {
     this.success = status === ResponseStatus.Success;
     this.message = message;
-    this.responseObject = responseObject;
+    this.data = responseObject;
     this.statusCode = statusCode;
   }
 }

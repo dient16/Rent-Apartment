@@ -5,6 +5,7 @@ import type { ZodError, ZodSchema } from 'zod';
 import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
 
 export const handleServiceResponse = (serviceResponse: ServiceResponse<any>, response: Response) => {
+  console.log(serviceResponse);
   return response.status(serviceResponse.statusCode).send(serviceResponse);
 };
 

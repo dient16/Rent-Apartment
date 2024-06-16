@@ -19,7 +19,9 @@ const createBooking = async (bookingData: Partial<IBooking>): Promise<ServiceRes
   }
 
   const [findError, apartment] = await to(
-    Apartment.findOne({ 'rooms._id': new mongoose.Types.ObjectId(roomId) }).exec()
+    Apartment.findOne({
+      'rooms._id': new mongoose.Types.ObjectId(roomId),
+    }).exec()
   );
 
   if (findError || !apartment) {
@@ -27,7 +29,10 @@ const createBooking = async (bookingData: Partial<IBooking>): Promise<ServiceRes
   }
 
   const room = apartment.rooms.id(roomId);
-  room.unavailableDateRanges.push({ startDay: checkInTime, endDay: checkOutTime });
+  room.unavailableDateRanges.push({
+    startDay: checkInTime,
+    endDay: checkOutTime,
+  });
 
   const [updateError] = await to(apartment.save());
   if (updateError) {
@@ -85,7 +90,9 @@ const getBookings = async (userId: string): Promise<ServiceResponse<any[]>> => {
 
   const bookingDetails = await Promise.all(
     bookings.map(async (booking) => {
-      const apartment = await Apartment.findOne({ 'rooms._id': booking.room }).exec();
+      const apartment = await Apartment.findOne({
+        'rooms._id': booking.room,
+      }).exec();
       const room = apartment.rooms.id(booking.room);
       return {
         _id: booking._id,

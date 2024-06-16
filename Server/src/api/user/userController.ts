@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { handleServiceResponse } from '@/common/utils/httpHandlers';
+
 import { userService } from './userService';
 
 export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -7,12 +9,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
     const { _id: uid } = req.user;
 
     const serviceResponse = await userService.findById(uid);
-
-    return res.status(serviceResponse.statusCode).json({
-      success: serviceResponse.success,
-      message: serviceResponse.message,
-      data: serviceResponse.responseObject ? { user: serviceResponse.responseObject } : undefined,
-    });
+    handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
   }
@@ -24,12 +21,7 @@ export const editUser = async (req: Request, res: Response, next: NextFunction) 
     const update = req.body;
 
     const serviceResponse = await userService.update(uid, update);
-
-    return res.status(serviceResponse.statusCode).json({
-      success: serviceResponse.success,
-      message: serviceResponse.message,
-      data: serviceResponse.responseObject ? { user: serviceResponse.responseObject } : undefined,
-    });
+    handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
   }

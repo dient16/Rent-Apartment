@@ -4,7 +4,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Request, RequestHandler, Response } from 'express';
 import { getReasonPhrase, StatusCodes } from 'http-status-codes';
 import type { LevelWithSilent } from 'pino';
-import { CustomAttributeKeys, Options, pinoHttp } from 'pino-http';
+import type { CustomAttributeKeys, Options } from 'pino-http';
+import { pinoHttp } from 'pino-http';
 
 import { env } from '@/common/utils/envConfig';
 
@@ -62,12 +63,11 @@ const responseBodyMiddleware: RequestHandler = (_req, res, next) => {
     res.send = function (content) {
       res.locals.responseBody = content;
       res.send = originalSend;
-      return originalSend.call(res, content);
+      return originalSend.call(this, content);
     };
   }
   next();
 };
-
 const customLogLevel = (_req: IncomingMessage, res: ServerResponse<IncomingMessage>, err?: Error): LevelWithSilent => {
   if (err || res.statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) return LogLevel.Error;
   if (res.statusCode >= StatusCodes.BAD_REQUEST) return LogLevel.Warn;

@@ -38,7 +38,6 @@ export const serviceRouter: Router = (() => {
       },
     },
     responses: createApiResponse(ServiceSchema, 'Success'),
-    security: [{ BearerAuth: [] }],
   });
 
   router.post('/', controller.createService);
@@ -58,7 +57,6 @@ export const serviceRouter: Router = (() => {
       params: z.object({ sid: z.string() }),
     },
     responses: createApiResponse(ServiceSchema, 'Success'),
-    security: [{ BearerAuth: [] }],
   });
 
   router.put('/:sid', verifyAccessToken, verifyIsAdmin, validateRequest(ServiceSchema), controller.updateService);
@@ -71,7 +69,6 @@ export const serviceRouter: Router = (() => {
       params: z.object({ sid: z.string() }),
     },
     responses: createApiResponse(ServiceSchema, 'Success'),
-    security: [{ BearerAuth: [] }],
   });
   router.delete('/:sid', verifyAccessToken, verifyIsAdmin, controller.deleteService);
 
