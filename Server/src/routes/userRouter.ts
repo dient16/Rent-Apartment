@@ -3,10 +3,11 @@ import type { Router } from 'express';
 import express from 'express';
 
 import * as controller from '@/api/user/userController';
-import { UserSchema } from '@/api/user/userModel';
+import { putUserSchema, UserSchema } from '@/api/user/userModel';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import upload from '@/common/middleware/uploadFile';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
+import { validateRequest } from '@/common/utils/httpHandlers';
 
 export const userRegistry = new OpenAPIRegistry();
 
@@ -17,7 +18,6 @@ export const userRouter: Router = (() => {
 
   userRegistry.registerPath({
     method: 'get',
-    security: [{ bearerauth: [] }],
     path: '/api/user/current-user',
     tags: ['User'],
     responses: createApiResponse(UserSchema, 'Success'),
@@ -27,7 +27,6 @@ export const userRouter: Router = (() => {
 
   userRegistry.registerPath({
     method: 'put',
-    security: [{ bearerauth: [] }],
     path: '/api/user',
     tags: ['User'],
     request: {
@@ -42,7 +41,7 @@ export const userRouter: Router = (() => {
     responses: createApiResponse(UserSchema, 'Success'),
   });
 
-  router.put('/', verifyAccessToken, upload.single('avatar'), controller.editUser);
+  router.put('/', verifyAccessToken, validateRequest(putUserSchema), upload.single('avatar'), controller.editUser);
 
   return router;
 })();

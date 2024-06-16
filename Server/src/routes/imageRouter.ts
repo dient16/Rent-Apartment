@@ -14,7 +14,6 @@ imageRegistry.registerPath({
   method: 'post',
   path: '/api/image',
   tags: ['Image'],
-  security: [{ bearerauth: [] }],
   request: {
     body: {
       content: {
@@ -35,7 +34,6 @@ imageRegistry.registerPath({
   method: 'post',
   path: '/api/image/multiple',
   tags: ['Image'],
-  security: [{ bearerauth: [] }],
   request: {
     body: {
       content: {
@@ -68,7 +66,6 @@ imageRegistry.registerPath({
   method: 'delete',
   path: '/api/image/:id',
   tags: ['Image'],
-  security: [{ bearerauth: [] }],
   request: {
     params: z.object({
       id: z.string(),

@@ -1,6 +1,8 @@
 import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { Router } from 'express';
 import passport from 'passport';
+import type { Profile as FacebookProfile } from 'passport-facebook';
+import type { Profile as GoogleProfile } from 'passport-google-oauth20';
 import { z } from 'zod';
 
 import * as controller from '@/api/auth/authController';
@@ -17,7 +19,7 @@ const router = Router();
 
 authRegistry.registerPath({
   method: 'post',
-  path: '/register',
+  path: '/api/auth/register',
   tags: ['Auth'],
   request: {
     body: {
@@ -35,7 +37,7 @@ router.post('/register', controller.register);
 
 authRegistry.registerPath({
   method: 'post',
-  path: '/login',
+  path: '/api/auth/login',
   tags: ['Auth'],
   request: {
     body: {
@@ -53,7 +55,7 @@ router.post('/login', controller.login);
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/logout',
+  path: '/api/auth/logout',
   tags: ['Auth'],
   security: [{ bearerauth: [] }],
   responses: createApiResponse(UserSchema, 'Success'),
@@ -63,9 +65,8 @@ router.get('/logout', verifyAccessToken, controller.logout);
 
 authRegistry.registerPath({
   method: 'post',
-  path: '/refresh-token',
+  path: '/api/auth/refresh-token',
   tags: ['Auth'],
-  security: [{ bearerauth: [] }],
   responses: createApiResponse(UserSchema, 'Success'),
 });
 
@@ -73,7 +74,7 @@ router.post('/refresh-token', verifyAccessToken, controller.refreshAccessToken);
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/confirm-email',
+  path: '/api/auth/confirm-email',
   tags: ['Auth'],
   request: {
     query: z.object({
@@ -87,7 +88,7 @@ router.get('/confirm-email', controller.confirmEmail);
 
 authRegistry.registerPath({
   method: 'post',
-  path: '/set-password',
+  path: '/api/auth/set-password',
   tags: ['Auth'],
   request: {
     body: {
@@ -108,7 +109,7 @@ router.post('/set-password', controller.setPassword);
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/google',
+  path: '/api/auth/google',
   tags: ['Auth'],
   security: [{ bearerauth: [] }],
   responses: createApiResponse(UserSchema, 'Success'),
@@ -124,7 +125,7 @@ router.get(
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/google/callback',
+  path: '/api/auth/google/callback',
   tags: ['Auth'],
   security: [{ bearerauth: [] }],
   responses: createApiResponse(UserSchema, 'Success'),
@@ -133,19 +134,19 @@ authRegistry.registerPath({
 router.get(
   '/google/callback',
   (req, res, next) => {
-    passport.authenticate('google', (err, profile) => {
+    passport.authenticate('google', (__err: Error, profile: GoogleProfile) => {
       req.user = profile;
       next();
     })(req, res, next);
   },
   (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/signin-success/${req.user?._id}`);
+    res.redirect(`${process.env.CLIENT_URL}/signin-success/${(req?.user as IUserDecode)._id}`);
   }
 );
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/facebook',
+  path: '/api/auth/facebook',
   tags: ['Auth'],
   security: [{ bearerauth: [] }],
   responses: createApiResponse(UserSchema, 'Success'),
@@ -155,7 +156,7 @@ router.get('/facebook', passport.authenticate('facebook', { session: false, scop
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/facebook/callback',
+  path: '/api/auth/facebook/callback',
   tags: ['Auth'],
   security: [{ bearerauth: [] }],
   responses: createApiResponse(UserSchema, 'Success'),
@@ -164,19 +165,19 @@ authRegistry.registerPath({
 router.get(
   '/facebook/callback',
   (req, res, next) => {
-    passport.authenticate('facebook', (err, profile) => {
+    passport.authenticate('facebook', (_err: Error, profile: FacebookProfile) => {
       req.user = profile;
       next();
     })(req, res, next);
   },
   (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/signin-success/${req.user?.id}`);
+    res.redirect(`${process.env.CLIENT_URL}/signin-success/${(req?.user as IUserDecode)._id}`);
   }
 );
 
 authRegistry.registerPath({
   method: 'get',
-  path: '/signin-success/{userId}',
+  path: '/api/auth/signin-success/{userId}',
   tags: ['Auth'],
   request: {
     params: z.object({

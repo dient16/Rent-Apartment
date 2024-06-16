@@ -5,15 +5,16 @@ import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 
-import type { User } from '@/api/user/userModel';
+import type { IUser } from '@/api/user/userModel';
 import UserModel from '@/api/user/userModel';
 import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import { env } from '@/common/utils/envConfig';
 import { generateAccessToken, generateRefreshToken, generateToken, sendMail } from '@/common/utils/helpers';
 
 const hashPassword = (password: string) => bcrypt.hashSync(password, bcrypt.genSaltSync(12));
-
+const { JWT_REFRESH_KEY } = env;
 export const authService = {
-  async register(email: string): Promise<ServiceResponse<User | null>> {
+  async register(email: string): Promise<ServiceResponse<IUser | null>> {
     const [errExistingUser, existingUser] = await to(UserModel.findOne({ email }));
     if (errExistingUser) {
       return new ServiceResponse(
@@ -59,14 +60,15 @@ export const authService = {
       return new ServiceResponse(ResponseStatus.Failed, 'Error sending email', null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ResponseStatus.Success, null>(
+    return new ServiceResponse(
+      ResponseStatus.Success,
       'Registration successful. Please check your email to confirm',
       newUser,
       StatusCodes.CREATED
     );
   },
 
-  async confirmEmail(token: string): Promise<ServiceResponse<User | null>> {
+  async confirmEmail(token: string): Promise<ServiceResponse<IUser | null>> {
     const [errFindUser, user] = await to(UserModel.findOne({ confirmationToken: token }));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid or expired token', null, StatusCodes.BAD_REQUEST);
@@ -83,10 +85,10 @@ export const authService = {
       );
     }
 
-    return new ServiceResponse<ResponseStatus.Success, null>('Email confirmed', user, StatusCodes.OK);
+    return new ServiceResponse(ResponseStatus.Success, 'Email confirmed', user, StatusCodes.OK);
   },
 
-  async setPassword(userId: string, password: string): Promise<ServiceResponse<User | null>> {
+  async setPassword(userId: string, password: string): Promise<ServiceResponse<IUser | null>> {
     const [errFindUser, user] = await to(UserModel.findById(userId));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
@@ -97,29 +99,30 @@ export const authService = {
     }
 
     const passwordHash = hashPassword(password);
-    const { isAdmin } = user.toObject();
-    const accessToken = generateAccessToken(user._id, isAdmin);
     const newRefreshToken = generateRefreshToken(user._id);
 
     const [errUpdateUser, updatedUser] = await to(
-      User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken, password: passwordHash }, { new: true }).select(
-        '-password -refreshToken'
-      )
+      UserModel.findByIdAndUpdate(
+        user._id,
+        { refreshToken: newRefreshToken, password: passwordHash },
+        { new: true }
+      ).select('-password -refreshToken')
     );
 
     if (errUpdateUser) {
       return new ServiceResponse(ResponseStatus.Failed, 'Error updating user', null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ResponseStatus.Success, null>(
+    return new ServiceResponse(
+      ResponseStatus.Success,
       'Password has been set successfully',
       updatedUser,
       StatusCodes.OK
     );
   },
 
-  async login(email: string, password: string): Promise<ServiceResponse<User | null>> {
-    const [errFindUser, user] = await to(User.findOne({ email }));
+  async login(email: string, password: string): Promise<ServiceResponse<{ accessToken: string; user: IUser } | null>> {
+    const [errFindUser, user] = await to(UserModel.findOne({ email }));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
     }
@@ -129,7 +132,10 @@ export const authService = {
       return new ServiceResponse(ResponseStatus.Failed, 'Incorrect password', null, StatusCodes.UNAUTHORIZED);
     }
 
-    const { password: userPassword, isAdmin, refreshToken, ...userData } = user.toObject();
+    const { isAdmin, ...userData } = user.toObject();
+    ['confirmationToken', 'password', 'refreshToken', 'createApartments', 'emailConfirmed'].forEach(
+      (e) => delete userData[e]
+    );
     const accessToken = generateAccessToken(user._id, isAdmin);
     const newRefreshToken = generateRefreshToken(user._id);
 
@@ -140,9 +146,10 @@ export const authService = {
       return new ServiceResponse(ResponseStatus.Failed, 'Error updating user', null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ResponseStatus.Success, null>(
+    return new ServiceResponse(
+      ResponseStatus.Success,
       'Login successful',
-      { ...userData, accessToken, refreshToken: newRefreshToken },
+      { accessToken, user: userData },
       StatusCodes.OK
     );
   },
@@ -158,11 +165,11 @@ export const authService = {
       );
     }
 
-    return new ServiceResponse<ResponseStatus.Success, null>('Logout is done', null, StatusCodes.OK);
+    return new ServiceResponse(ResponseStatus.Success, 'Logout is done', null, StatusCodes.OK);
   },
 
   async refreshAccessToken(refreshToken: string): Promise<ServiceResponse<string | null>> {
-    const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY) as { _id: string };
+    const decodedToken = jwt.verify(refreshToken, JWT_REFRESH_KEY) as { _id: string };
     if (!decodedToken) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid refresh token', null, StatusCodes.UNAUTHORIZED);
     }
@@ -173,9 +180,9 @@ export const authService = {
     }
 
     const newAccessToken = generateAccessToken(user._id, user.isAdmin);
-    return new ServiceResponse<ResponseStatus.Success, null>('Access token refreshed', newAccessToken, StatusCodes.OK);
+    return new ServiceResponse(ResponseStatus.Success, 'Access token refreshed', newAccessToken, StatusCodes.OK);
   },
-  async googleLoginSuccess(userId: string): Promise<ServiceResponse<User | null>> {
+  async googleLoginSuccess(userId: string): Promise<ServiceResponse<IUser | null>> {
     const [errFindUser, user] = await to(UserModel.findById(userId));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
@@ -185,8 +192,8 @@ export const authService = {
     const accessToken = generateAccessToken(user._id, isAdmin);
     const newRefreshToken = generateRefreshToken(user._id);
 
-    const [errUpdate, updatedUser] = await to(
-      User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true }).select(
+    const [errUpdate] = await to(
+      UserModel.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true }).select(
         '-password -refreshToken'
       )
     );
@@ -195,7 +202,8 @@ export const authService = {
       return new ServiceResponse(ResponseStatus.Failed, 'Error updating user', null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ResponseStatus.Success, null>(
+    return new ServiceResponse(
+      ResponseStatus.Success,
       'Login successful',
       { ...user.toObject(), accessToken, refreshToken: newRefreshToken },
       StatusCodes.OK

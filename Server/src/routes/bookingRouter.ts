@@ -18,7 +18,6 @@ bookingRegistry.registerPath({
     params: GetBookingSchema,
   },
   responses: createApiResponse(BookingSchema, 'Success'),
-  security: [{ bearerauth: [] }],
 });
 
 bookingRegistry.registerPath({
@@ -26,7 +25,6 @@ bookingRegistry.registerPath({
   path: '/bookings',
   tags: ['Booking'],
   responses: createApiResponse(BookingSchema.array(), 'Success'),
-  security: [{ bearerauth: [] }],
 });
 
 bookingRegistry.registerPath({
