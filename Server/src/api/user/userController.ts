@@ -6,7 +6,7 @@ import { userService } from './userService';
 
 export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { _id: uid } = req.user;
+    const { _id: uid } = req.user as IUserDecode;
 
     const serviceResponse = await userService.findById(uid);
     handleServiceResponse(serviceResponse, res);
@@ -17,7 +17,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
 
 export const editUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { _id: uid } = req.user;
+    const { _id: uid } = req.user as IUserDecode;
     const update = req.body;
 
     const serviceResponse = await userService.update(uid, update);

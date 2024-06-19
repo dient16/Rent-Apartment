@@ -4,6 +4,7 @@ import to from 'await-to-js';
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
+import { an } from 'vitest/dist/reporters-yx5ZTtEV';
 
 import type { IUser } from '@/api/user/userModel';
 import UserModel from '@/api/user/userModel';
@@ -121,37 +122,64 @@ export const authService = {
     );
   },
 
-  async login(email: string, password: string): Promise<ServiceResponse<{ accessToken: string; user: IUser } | null>> {
-    const [errFindUser, user] = await to(UserModel.findOne({ email }));
-    if (errFindUser || !user) {
-      return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
+  async login(
+    email: string,
+    password: string
+  ): Promise<ServiceResponse<{ accessToken: string; refreshToken?: string; user: any } | null>> {
+    try {
+      const [errFindUser, user] = await to(UserModel.findOne({ email }));
+      if (errFindUser || !user) {
+        return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
+      }
+
+      const userPassword = user.password;
+      if (!userPassword) {
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Password not set for this user',
+          null,
+          StatusCodes.UNAUTHORIZED
+        );
+      }
+
+      const [errPassword, isPasswordCorrect] = await to(bcrypt.compare(password, userPassword));
+      if (errPassword || !isPasswordCorrect) {
+        return new ServiceResponse(ResponseStatus.Failed, 'Incorrect password', null, StatusCodes.UNAUTHORIZED);
+      }
+      const { isAdmin, ...userData } = user.toObject();
+      ['confirmationToken', 'password', 'createApartments', 'emailConfirmed', 'provider', 'refreshToken'].forEach(
+        (e) => delete userData[e]
+      );
+
+      const accessToken = generateAccessToken(user._id, isAdmin);
+      const newRefreshToken = generateRefreshToken(user._id);
+
+      const [errUpdate] = await to(
+        UserModel.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true })
+      );
+      if (errUpdate) {
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Error updating user',
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR
+        );
+      }
+
+      return new ServiceResponse(
+        ResponseStatus.Success,
+        'Login successful',
+        { accessToken, refreshToken: newRefreshToken, user: userData },
+        StatusCodes.OK
+      );
+    } catch (error) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'An unexpected error occurred',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
-
-    const [errPassword, isPasswordCorrect] = await to(bcrypt.compare(password, user.password));
-    if (errPassword || !isPasswordCorrect) {
-      return new ServiceResponse(ResponseStatus.Failed, 'Incorrect password', null, StatusCodes.UNAUTHORIZED);
-    }
-
-    const { isAdmin, ...userData } = user.toObject();
-    ['confirmationToken', 'password', 'refreshToken', 'createApartments', 'emailConfirmed'].forEach(
-      (e) => delete userData[e]
-    );
-    const accessToken = generateAccessToken(user._id, isAdmin);
-    const newRefreshToken = generateRefreshToken(user._id);
-
-    const [errUpdate] = await to(
-      UserModel.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true })
-    );
-    if (errUpdate) {
-      return new ServiceResponse(ResponseStatus.Failed, 'Error updating user', null, StatusCodes.INTERNAL_SERVER_ERROR);
-    }
-
-    return new ServiceResponse(
-      ResponseStatus.Success,
-      'Login successful',
-      { accessToken, user: userData },
-      StatusCodes.OK
-    );
   },
 
   async logout(refreshToken: string): Promise<ServiceResponse<null>> {
@@ -168,7 +196,7 @@ export const authService = {
     return new ServiceResponse(ResponseStatus.Success, 'Logout is done', null, StatusCodes.OK);
   },
 
-  async refreshAccessToken(refreshToken: string): Promise<ServiceResponse<string | null>> {
+  async refreshAccessToken(refreshToken: string): Promise<ServiceResponse<{ accessToken: string } | null>> {
     const decodedToken = jwt.verify(refreshToken, JWT_REFRESH_KEY) as { _id: string };
     if (!decodedToken) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid refresh token', null, StatusCodes.UNAUTHORIZED);
@@ -180,7 +208,12 @@ export const authService = {
     }
 
     const newAccessToken = generateAccessToken(user._id, user.isAdmin);
-    return new ServiceResponse(ResponseStatus.Success, 'Access token refreshed', newAccessToken, StatusCodes.OK);
+    return new ServiceResponse(
+      ResponseStatus.Success,
+      'Access token refreshed',
+      { accessToken: newAccessToken },
+      StatusCodes.OK
+    );
   },
   async googleLoginSuccess(userId: string): Promise<ServiceResponse<IUser | null>> {
     const [errFindUser, user] = await to(UserModel.findById(userId));

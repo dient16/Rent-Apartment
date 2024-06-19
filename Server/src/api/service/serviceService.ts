@@ -4,11 +4,11 @@ import { StatusCodes } from 'http-status-codes';
 import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
 import { logger } from '@/server';
 
-import type { Service as ServiceType } from './serviceModel';
+import type { IService } from './serviceModel';
 import Service from './serviceModel';
 
 export const serviceService = {
-  async createService(title: string, description?: string): Promise<ServiceResponse<ServiceType | null>> {
+  async createService(title: string, description?: string): Promise<ServiceResponse<IService | null>> {
     const [errExistingService, existingService] = await to(Service.findOne({ title }).exec());
 
     if (errExistingService) {
@@ -30,7 +30,7 @@ export const serviceService = {
       return new ServiceResponse(ResponseStatus.Failed, errorMessage, null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ServiceType>(
+    return new ServiceResponse<IService>(
       ResponseStatus.Success,
       'Service created successfully',
       newService,
@@ -38,7 +38,7 @@ export const serviceService = {
     );
   },
 
-  async getServices(): Promise<ServiceResponse<ServiceType[] | null>> {
+  async getServices(): Promise<ServiceResponse<IService[] | null>> {
     const [errGetServices, services] = await to(Service.find({}).exec());
 
     if (errGetServices) {
@@ -51,7 +51,7 @@ export const serviceService = {
       return new ServiceResponse(ResponseStatus.Failed, 'No services found', null, StatusCodes.NOT_FOUND);
     }
 
-    return new ServiceResponse<ServiceType[]>(
+    return new ServiceResponse<IService[]>(
       ResponseStatus.Success,
       'Get services successfully',
       services,
@@ -59,7 +59,7 @@ export const serviceService = {
     );
   },
 
-  async updateService(sid: string, title: string, description?: string): Promise<ServiceResponse<ServiceType | null>> {
+  async updateService(sid: string, title: string, description?: string): Promise<ServiceResponse<IService | null>> {
     const [errFindService, service] = await to(Service.findById(sid).exec());
 
     if (errFindService) {
@@ -82,15 +82,10 @@ export const serviceService = {
       return new ServiceResponse(ResponseStatus.Failed, errorMessage, null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ServiceType>(
-      ResponseStatus.Success,
-      'Service updated successfully',
-      updatedService,
-      StatusCodes.OK
-    );
+    return new ServiceResponse(ResponseStatus.Success, 'Service updated successfully', updatedService, StatusCodes.OK);
   },
 
-  async deleteService(sid: string): Promise<ServiceResponse<ServiceType | null>> {
+  async deleteService(sid: string): Promise<ServiceResponse<IService | null>> {
     const [errFindService, service] = await to(Service.findById(sid).exec());
 
     if (errFindService) {
@@ -111,7 +106,7 @@ export const serviceService = {
       return new ServiceResponse(ResponseStatus.Failed, errorMessage, null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
-    return new ServiceResponse<ServiceType>(
+    return new ServiceResponse<IService>(
       ResponseStatus.Success,
       'Service deleted successfully',
       service,

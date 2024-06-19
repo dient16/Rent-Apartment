@@ -16,7 +16,7 @@ export const ServiceSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-export type Service = z.infer<typeof ServiceSchema>;
+export type IService = z.infer<typeof ServiceSchema>;
 
 const serviceMongooseSchema = new mongoose.Schema(
   {
@@ -28,6 +28,6 @@ const serviceMongooseSchema = new mongoose.Schema(
   }
 );
 
-const ServiceModel = mongoose.model<Service & Document>(DOCUMENT, serviceMongooseSchema, COLLECTION);
+const ServiceModel = mongoose.model<IService & Document>(DOCUMENT, serviceMongooseSchema, COLLECTION);
 
 export default ServiceModel;

@@ -34,7 +34,10 @@ export const UserSchema = z.object({
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
-
+export const userDecodeSchema = z.object({
+  _id: z.string(),
+  isAdmin: z.boolean().default(false),
+});
 export type IUser = z.infer<typeof UserSchema>;
 
 const userMongooseSchema = new mongoose.Schema(
@@ -100,7 +103,7 @@ const userMongooseSchema = new mongoose.Schema(
   }
 );
 
-const UserModel = mongoose.model<User & Document>(DOCUMENT, userMongooseSchema, COLLECTION);
+const UserModel = mongoose.model<IUser & Document>(DOCUMENT, userMongooseSchema, COLLECTION);
 
 export default UserModel;
 

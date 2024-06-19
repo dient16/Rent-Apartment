@@ -18,6 +18,7 @@ import initRoutes from '@/routes';
 const logger = pino({ name: 'server start' });
 const app: Express = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // Set the application to trust the reverse proxy
 app.set('trust proxy', true);
 
@@ -30,6 +31,7 @@ app.use(
     crossOriginResourcePolicy: false,
   })
 );
+app.use(passport.initialize());
 app.use(rateLimiter);
 app.use(mogran('combined'));
 // Request logging
@@ -38,7 +40,6 @@ app.use(requestLogger);
 // Routes
 initRoutes(app);
 dbConnect();
-app.use(passport.initialize());
 
 // Error handlers
 app.use(errorHandler());

@@ -8,10 +8,3 @@ const isValidObjectId = (id: string) => {
 export const commonValidations = {
   id: z.string().refine((id) => isValidObjectId(id), 'Is not a valid id'),
 };
-// export const commonValidations = {
-//   id: z
-//     .string()
-//     .refine((data) => !Number.isNaN(Number(data)), 'ID must be a numeric value')
-//     .transform(Number)
-//     .refine((num) => num > 0, 'ID must be a positive number'),
-// };
