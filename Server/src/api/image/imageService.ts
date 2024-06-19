@@ -1,13 +1,15 @@
 import type { Readable } from 'node:stream';
 
 import { default as to } from 'await-to-js';
-import { GridFSBucket } from 'mongodb';
-import mongoose, { Connection } from 'mongoose';
+import type { GridFSBucket } from 'mongodb';
+import type { Connection } from 'mongoose';
+import mongoose from 'mongoose';
 
-const conn: Connection = mongoose.createConnection(process.env.MONGODB_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import { env } from '@/common/utils/envConfig';
+
+const { MONGODB_URL, SERVER_URL } = env;
+const conn: Connection = mongoose.createConnection(MONGODB_URL);
 
 const gfsPromise = new Promise<GridFSBucket>((resolve, reject) => {
   conn.once('open', () => {
@@ -22,64 +24,95 @@ const gfsPromise = new Promise<GridFSBucket>((resolve, reject) => {
   });
 });
 
-export const uploadImageService = async (filename: string): Promise<string> => {
+export const uploadImageService = async (filename: string): Promise<ServiceResponse<string | null>> => {
   if (filename) {
-    return `${process.env.SERVER_URL}/api/image/${filename}`;
-  } else {
-    throw new Error('Error upload image');
+    return new ServiceResponse<string>(
+      ResponseStatus.Success,
+      'Image uploaded successfully',
+      `${SERVER_URL}/api/image/${filename}`,
+      200
+    );
   }
+  return new ServiceResponse<string | null>(ResponseStatus.Failed, 'Error upload image', null, 500);
 };
 
-export const openImageBrowserService = async (filename: string): Promise<Readable> => {
+export const openImageBrowserService = async (filename: string): Promise<ServiceResponse<Readable | null>> => {
   const gfs = await gfsPromise;
   const [err, files] = await to(gfs.find({ filename }).toArray());
 
   if (err) {
-    throw new Error('Error preview image');
+    return new ServiceResponse<Readable | null>(ResponseStatus.Failed, 'Error preview image', null, 500);
   }
 
   if (!files || files.length === 0) {
-    throw new Error('No image exist');
+    return new ServiceResponse<Readable | null>(ResponseStatus.Failed, 'No image exist', null, 404);
   }
 
-  return gfs.openDownloadStreamByName(filename);
+  return new ServiceResponse<Readable>(
+    ResponseStatus.Success,
+    'Image retrieved successfully',
+    gfs.openDownloadStreamByName(filename),
+    200
+  );
 };
 
-export const getRecentFileService = async (): Promise<any> => {
+export const getRecentFileService = async (): Promise<ServiceResponse<any | null>> => {
   const gfs = await gfsPromise;
-  const files = await gfs.find().sort({ uploadDate: -1 }).limit(1).toArray();
-  if (!files || files.length === 0) {
-    throw new Error('No files available');
+  const [err, files] = await to(gfs.find().sort({ uploadDate: -1 }).limit(1).toArray());
+
+  if (err) {
+    return new ServiceResponse<any>(ResponseStatus.Failed, 'Error fetching recent file', null, 500);
   }
-  return files[0];
+
+  if (!files || files.length === 0) {
+    return new ServiceResponse<any>(ResponseStatus.Failed, 'No files available', null, 404);
+  }
+
+  return new ServiceResponse<any>(ResponseStatus.Success, 'Recent file retrieved successfully', files[0], 200);
 };
 
-export const getAllFilesService = async (): Promise<any[]> => {
+export const getAllFilesService = async (): Promise<ServiceResponse<any[]>> => {
   const gfs = await gfsPromise;
-  const files = await gfs.find().toArray();
-  if (!files || files.length === 0) {
-    throw new Error('No files available');
+  const [err, files] = await to(gfs.find().toArray());
+
+  if (err) {
+    return new ServiceResponse<any[]>(ResponseStatus.Failed, 'Error fetching files', [], 500);
   }
-  return files.map((file) => ({
+
+  if (!files || files.length === 0) {
+    return new ServiceResponse<any[]>(ResponseStatus.Failed, 'No files available', [], 404);
+  }
+
+  const fileDetails = files.map((file: any) => ({
     ...file,
     isImage: ['image/jpeg', 'image/png', 'image/svg+xml'].includes(file.contentType),
   }));
+
+  return new ServiceResponse<any[]>(ResponseStatus.Success, 'Files retrieved successfully', fileDetails, 200);
 };
 
-export const getFileByFilenameService = async (filename: string): Promise<any> => {
+export const getFileByFilenameService = async (filename: string): Promise<ServiceResponse<any | null>> => {
   const gfs = await gfsPromise;
-  const files = await gfs.find({ filename }).toArray();
-  if (!files[0] || files.length === 0) {
-    throw new Error('File not found');
+  const [err, files] = await to(gfs.find({ filename }).toArray());
+
+  if (err) {
+    return new ServiceResponse<any>(ResponseStatus.Failed, 'Error fetching file', null, 500);
   }
-  return files[0];
+
+  if (!files[0] || files.length === 0) {
+    return new ServiceResponse<any>(ResponseStatus.Failed, 'File not found', null, 404);
+  }
+
+  return new ServiceResponse<any>(ResponseStatus.Success, 'File retrieved successfully', files[0], 200);
 };
 
-export const deleteFileByFileNameService = async (id: string): Promise<any> => {
+export const deleteFileByFileNameService = async (id: string): Promise<ServiceResponse<any>> => {
   const gfs = await gfsPromise;
   const [err, result] = await to(gfs.delete(new mongoose.Types.ObjectId(id)));
+
   if (err) {
-    throw new Error('Error deleting file');
+    return new ServiceResponse<any>(ResponseStatus.Failed, 'Error deleting file', null, 500);
   }
-  return result;
+
+  return new ServiceResponse<any>(ResponseStatus.Success, 'File deleted successfully', result, 200);
 };

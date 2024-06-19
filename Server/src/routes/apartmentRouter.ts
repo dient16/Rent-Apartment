@@ -3,10 +3,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as controller from '@/api/apartment/apartmentController';
-import { apartmentSchema } from '@/api/apartment/apartmentModel';
+import { apartmentSchema, createApartmentSchema, searchRoomSchema } from '@/api/apartment/apartmentModel';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import upload from '@/common/middleware/uploadFile';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
+import { validateRequest } from '@/common/utils/httpHandlers';
 
 export const apartmentRegistry = new OpenAPIRegistry();
 
@@ -30,7 +31,7 @@ apartmentRegistry.registerPath({
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
-router.post('/', verifyAccessToken, upload.any(), controller.createApartment);
+router.post('/', verifyAccessToken, upload.any(), validateRequest(createApartmentSchema), controller.createApartment);
 
 apartmentRegistry.registerPath({
   method: 'get',
@@ -39,7 +40,7 @@ apartmentRegistry.registerPath({
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
-router.get('/search', controller.searchApartments);
+router.get('/search', validateRequest(searchRoomSchema), controller.searchApartments);
 
 apartmentRegistry.registerPath({
   method: 'get',

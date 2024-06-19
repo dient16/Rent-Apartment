@@ -56,12 +56,10 @@ const AddRoom: React.FC<AddRoomProps> = ({
                render={({ field }) => (
                   <Flex vertical gap={5}>
                      <Checkbox.Group
-                        options={(servicesData?.data.services || []).map(
-                           (service) => ({
-                              label: service.title,
-                              value: service._id,
-                           }),
-                        )}
+                        options={(servicesData?.data || []).map((service) => ({
+                           label: service.title,
+                           value: service._id,
+                        }))}
                         {...field}
                         defaultValue={field.value}
                         className="grid grid-cols-6 text-lg"

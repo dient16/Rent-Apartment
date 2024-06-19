@@ -7,7 +7,6 @@ import type { IUser } from './userModel';
 import UserModel from './userModel';
 
 export const userService = {
-  // Retrieves all users from the database
   findAll: async (): Promise<ServiceResponse<IUser[] | null>> => {
     try {
       const users = await UserModel.find().exec();
@@ -22,13 +21,15 @@ export const userService = {
     }
   },
 
-  // Retrieves a single user by their ID
-  findById: async (id: string): Promise<ServiceResponse<User | null>> => {
+  findById: async (id: string): Promise<ServiceResponse<IUser | null>> => {
     try {
-      const user = await UserModel.findById(id).exec();
+      const user = await UserModel.findById(id)
+        .select('-confirmationToken -password -createApartments -emailConfirmed -provider -isAdmin -refreshToken')
+        .exec();
       if (!user) {
         return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
       }
+
       return new ServiceResponse<IUser>(ResponseStatus.Success, 'User found', user, StatusCodes.OK);
     } catch (ex) {
       const errorMessage = `Error finding user with id ${id}: ${(ex as Error).message}`;
@@ -37,8 +38,7 @@ export const userService = {
     }
   },
 
-  // Updates a user by their ID
-  update: async (id: string, updateData: Partial<User>): Promise<ServiceResponse<User | null>> => {
+  update: async (id: string, updateData: Partial<IUser>): Promise<ServiceResponse<IUser | null>> => {
     try {
       const user = await UserModel.findByIdAndUpdate(id, updateData, {
         new: true,

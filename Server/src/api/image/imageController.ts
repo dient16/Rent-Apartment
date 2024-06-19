@@ -11,7 +11,7 @@ import {
 
 export const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const link = await uploadImageService(req.file.filename);
+    const link = await uploadImageService(req.file?.filename as string);
     res.status(200).json({
       success: true,
       data: { link },
@@ -24,22 +24,35 @@ export const uploadImage = async (req: Request, res: Response, next: NextFunctio
 export const openImageBrowser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const stream = await openImageBrowserService(req.params.filename);
-    stream.pipe(res);
+    stream.data?.pipe(res);
   } catch (error) {
     next(error);
   }
 };
 
 export const uploadMultipleFiles = (req: Request, res: Response, next: NextFunction) => {
-  const filenames = req.files.map((file) => file?.filename);
+  try {
+    if (!req.files || !Array.isArray(req.files)) {
+      return res.status(400).json({
+        success: false,
+        message: 'No files uploaded',
+      });
+    }
 
-  res.status(200).json({
-    success: true,
-    message: `${filenames.length} files uploaded successfully`,
-    data: {
-      filenames,
-    },
-  });
+    const files = req.files as Express.Multer.File[];
+
+    const filenames = files.map((file) => file.filename);
+
+    res.status(200).json({
+      success: true,
+      message: `${filenames.length} files uploaded successfully`,
+      data: {
+        filenames: filenames,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getRecentFile = async (req: Request, res: Response, next: NextFunction) => {
@@ -80,7 +93,7 @@ export const getFileByFilename = async (req: Request, res: Response, next: NextF
 
 export const deleteFileByFileName = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await deleteFileByFileNameService(req.params.id);
+    await deleteFileByFileNameService(req.params.id);
     res.status(200).json({
       success: true,
       message: `File with ID ${req.params.id} is deleted`,

@@ -11,7 +11,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
       if (err) {
         return res.status(StatusCodes.UNAUTHORIZED).json({
           status: false,
-          message: 'Invalid access token',
+          message: 'Invalid access token!!!',
         });
       }
       req.user = decode as IUserDecode;
@@ -30,7 +30,7 @@ export const verifyIsAdmin = (req: Request, res: Response, next: NextFunction) =
   if (!user?.isAdmin) {
     return res.status(StatusCodes.UNAUTHORIZED).json({
       status: false,
-      message: 'REQUIRE ADMIN ROLE',
+      message: 'Required admin role!!!',
     });
   }
 

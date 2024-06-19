@@ -1,11 +1,12 @@
 import { default as to } from 'await-to-js';
 import { StatusCodes } from 'http-status-codes';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
 import Room from '@/api/room/roomModel';
 import User from '@/api/user/userModel';
 import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
 
+import type { CreateRoom, Location } from './apartmentModel';
 import Apartment from './apartmentModel';
 
 export const apartmentService = {
@@ -32,7 +33,7 @@ export const apartmentService = {
 
     return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
-
+  // TODO: api get detail room
   async getApartment(apartmentId: string, query: any) {
     const { start_date, end_date, number_of_guest, room_number, min_price, max_price } = query;
 
@@ -165,126 +166,160 @@ export const apartmentService = {
     );
   },
 
-  async createApartment(createBy: string, title: string, rooms: any[], location: string, files: any) {
-    const roomPromises = rooms.map(async (room, index) => {
-      const fieldName = `rooms[${index}][images]`;
-      const roomImages = files.filter((image: any) => image.fieldname === fieldName) || [];
-      const images = roomImages.map((file: any) => file?.filename);
+  async createApartment(
+    createBy: string,
+    title: string,
+    rooms: CreateRoom[],
+    location: Location,
+    files: Express.Multer.File[]
+  ) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-      const services = room.services.map((service: any) => new mongoose.Types.ObjectId(service));
+    try {
+      const roomPromises = rooms.map(async (room, index) => {
+        const fieldName = `rooms[${index}][images]`;
+        const roomImages = files.filter((image: any) => image.fieldname === fieldName) || [];
+        const images = roomImages.map((file: any) => file?.filename);
 
-      const newRoom = await Room.create({
-        ...room,
-        images,
-        services,
-        apartmentId: null, // Will be set later
+        const services = room.services.map((service: any) => new Types.ObjectId(service));
+
+        const [err, newRoom] = await to(
+          Room.create(
+            [
+              {
+                ...room,
+                images,
+                services,
+                apartmentId: null,
+              },
+            ],
+            { session }
+          )
+        );
+
+        if (err || !newRoom || newRoom.length === 0) {
+          return new ServiceResponse(
+            ResponseStatus.Failed,
+            'Failed to create room',
+            null,
+            StatusCodes.INTERNAL_SERVER_ERROR
+          );
+        }
+
+        return newRoom[0]._id;
       });
 
-      return newRoom._id;
-    });
+      const roomIds = await Promise.all(roomPromises);
+      if (roomIds.some((id) => id instanceof ServiceResponse)) {
+        await session.abortTransaction();
+        return roomIds.find((id) => id instanceof ServiceResponse) as ServiceResponse;
+      }
 
-    const roomIds = await Promise.all(roomPromises);
+      const [errApartment, newApartment] = await to(
+        Apartment.create(
+          [
+            {
+              title,
+              createBy,
+              location,
+              rooms: roomIds,
+            },
+          ],
+          { session }
+        )
+      );
 
-    const [err, newApartment] = await to(
-      Apartment.create({
-        title,
-        createBy,
-        location,
-        rooms: roomIds,
-      })
-    );
+      if (errApartment || !newApartment || newApartment.length === 0) {
+        await session.abortTransaction();
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Failed to create apartment',
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR
+        );
+      }
 
-    if (err) {
+      const [errUpdateRooms] = await to(
+        Room.updateMany({ _id: { $in: roomIds } }, { $set: { apartmentId: newApartment[0]._id } }, { session })
+      );
+
+      if (errUpdateRooms) {
+        await session.abortTransaction();
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Failed to update rooms',
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR
+        );
+      }
+
+      const [errUpdateUser] = await to(
+        User.findByIdAndUpdate(createBy, { $push: { createApartments: newApartment[0]._id } }, { new: true, session })
+      );
+
+      if (errUpdateUser) {
+        await session.abortTransaction();
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Failed to update user',
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR
+        );
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      const populatedRooms = await Room.find({ _id: { $in: roomIds } }).populate('services');
+
+      const response = {
+        ...newApartment[0].toObject(),
+        rooms: populatedRooms,
+      };
+
+      return new ServiceResponse(ResponseStatus.Success, 'Apartment created successfully', response, StatusCodes.OK);
+    } catch (error) {
+      await session.abortTransaction();
       return new ServiceResponse(
         ResponseStatus.Failed,
         'Error creating apartment',
         null,
         StatusCodes.INTERNAL_SERVER_ERROR
       );
+    } finally {
+      session.endSession();
     }
-
-    await Room.updateMany({ _id: { $in: roomIds } }, { $set: { apartmentId: newApartment._id } });
-
-    let updateUser;
-    [err, updateUser] = await to(
-      User.findByIdAndUpdate(createBy, { $push: { createApartments: newApartment._id } }, { new: true })
-    );
-
-    if (err || !updateUser) {
-      return new ServiceResponse(
-        ResponseStatus.Failed,
-        'Error updating user with new apartment',
-        null,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
-    }
-
-    const populatedRooms = await Room.find({ _id: { $in: roomIds } }).populate('services');
-
-    populatedRooms.forEach(async (room) => {
-      room.apartmentId = newApartment._id;
-      await room.save();
-    });
-
-    const response = {
-      _id: newApartment._id,
-      title: newApartment.title,
-      location: newApartment.location,
-      createBy: newApartment.createBy,
-      rooms: populatedRooms,
-    };
-
-    return new ServiceResponse(ResponseStatus.Success, 'Apartment created successfully', response, StatusCodes.OK);
   },
-
   async searchApartments(query: any) {
     const {
-      number_of_guest,
-      room_number,
+      numberOfGuest,
+      roomNumber,
       province,
       district,
       ward,
       street,
-      start_date,
-      end_date,
+      startDate,
+      endDate,
       name,
-      min_price,
-      max_price,
+      minPrice,
+      maxPrice,
+      limit,
+      page,
     } = query;
 
-    const parsedStartDay = new Date(start_date);
-    const parsedEndDay = new Date(end_date);
-    const page = Number.parseInt(query.page, 10) || 1;
-    const limit = Number.parseInt(query.limit, 10) || 10;
-    const minPrice = Number.parseInt(min_price, 10) || 0;
-    const maxPrice = Number.parseInt(max_price, 10) || 1000000000;
-    const skip = (page - 1) * limit;
-    const today = new Date(Date.now()).setHours(0, 0, 0, 0);
-
-    if (parsedStartDay < today || parsedEndDay < today) {
-      return new ServiceResponse(
-        ResponseStatus.Failed,
-        'The start date or end date cannot be earlier than the current date',
-        null,
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
-    const parsedNumberOfGuest = Number.parseInt(number_of_guest, 10) || 1;
-    const parsedQuantity = Number.parseInt(room_number, 10) || 1;
-
     const roomQuery = {
-      numberOfGuest: { $gte: parsedNumberOfGuest },
-      quantity: { $gte: parsedQuantity },
+      numberOfGuest: { $gte: numberOfGuest },
+      quantity: { $gte: roomNumber },
       unavailableDateRanges: {
         $not: {
           $elemMatch: {
-            startDay: { $lte: parsedEndDay },
-            endDay: { $gte: parsedStartDay },
+            startDay: { $lte: endDate },
+            endDay: { $gte: startDate },
           },
         },
       },
-      price: { $gte: minPrice, $lte: maxPrice },
+      price: { $gte: minPrice || 0, $lte: maxPrice },
     };
 
     const [roomError, rooms] = await to(Room.find(roomQuery).populate('services').exec());
@@ -311,7 +346,6 @@ export const apartmentService = {
     const queryObj = {
       'rooms.price': { $gte: minPrice, $lte: maxPrice },
     };
-
     const [error, aggregateResult] = await to(
       Apartment.aggregate([
         initialMatch,
@@ -368,18 +402,14 @@ export const apartmentService = {
                   rating: {
                     ratingAvg: {
                       $cond: {
-                        if: {
-                          $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0],
-                        },
+                        if: { $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0] },
                         then: { $avg: '$reviews.score' },
                         else: 0,
                       },
                     },
                     totalRating: {
                       $cond: {
-                        if: {
-                          $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0],
-                        },
+                        if: { $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0] },
                         then: { $sum: '$reviews.score' },
                         else: 0,
                       },
@@ -387,7 +417,7 @@ export const apartmentService = {
                   },
                 },
               },
-              { $skip: skip },
+              { $skip: (page - 1) * limit },
               { $limit: limit },
             ],
             totalCount: [
@@ -405,7 +435,6 @@ export const apartmentService = {
         },
       ]).exec()
     );
-
     if (error) {
       return new ServiceResponse(
         ResponseStatus.Failed,
@@ -438,7 +467,6 @@ export const apartmentService = {
         services: room.services.map((service: any) => new mongoose.Types.ObjectId(service)),
       };
     });
-
     const [err, updatedApartment] = await to(
       Apartment.findByIdAndUpdate(
         apartmentId,
@@ -499,13 +527,13 @@ export const apartmentService = {
       );
     }
 
-    [err] = await to(
+    const [errUpdateUser] = await to(
       User.findByIdAndUpdate(deletedBy, {
-        $pull: { createdApartments: deletedApartment._id },
+        $pull: { createdApartments: deletedApartment?._id },
       })
     );
 
-    if (err) {
+    if (errUpdateUser) {
       return new ServiceResponse(ResponseStatus.Failed, 'Error updating user', null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 
