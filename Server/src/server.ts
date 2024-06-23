@@ -33,7 +33,7 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(rateLimiter);
-app.use(mogran('combined'));
+app.use(mogran('dev'));
 // Request logging
 app.use(requestLogger);
 

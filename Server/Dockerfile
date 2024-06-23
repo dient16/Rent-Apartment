@@ -15,8 +15,8 @@ COPY . .
 # Build the TypeScript files
 RUN npm run build
 
-# Expose port 8080
-EXPOSE 8080
+# Expose port 9009
+EXPOSE 9009
 
 # Start the app
 CMD npm run start

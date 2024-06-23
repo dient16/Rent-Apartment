@@ -1,7 +1,13 @@
-import { GoogleMap, Reviews, TableSelectRoom } from '@/components';
+import {
+   Map,
+   NavigationBarRoom,
+   Reviews,
+   RoomList,
+   RoomPolices,
+} from '@/components';
 import icons from '@/utils/icons';
 import { Button, DatePicker, Drawer, Image, Result, Spin, Tooltip } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -38,7 +44,7 @@ const ApartmentDetail: React.FC = () => {
       formState: { errors, isValid },
       watch,
    } = useForm();
-   const { data: { data: { apartment } = {} } = {}, isFetching } = useQuery({
+   const { data: { data: apartment } = {}, isFetching } = useQuery({
       queryKey: ['apartment', apartmentId, searchParams.toString()],
       queryFn: () => apiApartmentDetail(apartmentId, searchParams.toString()),
       staleTime: 0,
@@ -48,7 +54,6 @@ const ApartmentDetail: React.FC = () => {
    const [selectedRoomIndex, setSelectedRoomIndex] = useState<number | null>(
       null,
    );
-
    const startDate: string | null = searchParams.get('start_date');
    const endDate: string | null = searchParams.get('end_date');
    const numberOfGuest: number =
@@ -250,8 +255,9 @@ const ApartmentDetail: React.FC = () => {
                         </p>
                      </div>
                   </div>
+                  <NavigationBarRoom />
                   <div className="mt-7">
-                     <h3 className="text-xl font-normal">
+                     <h3 id="overview" className="text-xl font-normal">
                         This place has something for you
                      </h3>
                      <div className="grid grid-cols-4 gap-3 mt-5 font-light">
@@ -281,47 +287,10 @@ const ApartmentDetail: React.FC = () => {
                         {rooms[0].description}
                      </div>
                   </div>
-                  <div className="my-7 table-apartment-detail">
-                     <Controller
-                        name="roomsData"
-                        control={control}
-                        defaultValue={rooms.map((room) => ({
-                           key: room._id,
-                           roomType: {
-                              roomType: room.roomType,
-                              services: room.services.map(
-                                 (service) => service.title,
-                              ),
-                              sizeRoom: room.size,
-                           },
-                           numberOfGuest: room.numberOfGuest,
-                           price: room.price,
-                           quantity: room.quantity,
-                           roomNumber:
-                              searchParams.get('room_id') === room._id
-                                 ? +searchParams.get('room_number') || 1
-                                 : 0,
-                        }))}
-                        rules={{
-                           validate: (value) => {
-                              const atLeastOneRoom = value.some(
-                                 (room) => room.roomNumber > 0,
-                              );
-                              if (!atLeastOneRoom) {
-                                 return 'At least one room is required';
-                              }
-                              return true;
-                           },
-                        }}
-                        render={({ field }) => (
-                           <TableSelectRoom
-                              numberOfDay={numberOfDays}
-                              value={field.value}
-                              onChange={(value) => field.onChange(value)}
-                           />
-                        )}
-                     />
-                  </div>
+                  <h3 id="rooms" className="my-5 text-xl font-normal">
+                     Rooms
+                  </h3>
+                  <RoomList />
                </div>
                <div className="sticky p-6 mt-5 rounded-lg shadow min-w-[350px] shadow-gray-400 top-[140px]">
                   <div className="flex flex-col gap-3 justify-center items-center w-full">
@@ -431,16 +400,21 @@ const ApartmentDetail: React.FC = () => {
                   </div>
                </div>
             </div>
-            <div className="mt-5 border border-t"></div>
-            <div className="my-5 h-[500px] google-map">
-               <h3 className="text-xl font-normal mb">Where you will go</h3>
-               <GoogleMap
-                  lat={apartment?.location.longitude}
-                  lng={apartment?.location.latitude}
+            <div className="relative z-0 my-5 w-full h-[500px] h-128">
+               <h3 id="location" className="mb-5 ml-3 text-xl font-normal">
+                  Where you will go
+               </h3>
+               <Map
+                  selectPosition={{
+                     lat: apartment?.location.longitude,
+                     lon: apartment?.location.latitude,
+                  }}
                />
             </div>
-            <div className="mt-10 border border-t"></div>
-            <div className="">
+            <div className="mt-4">
+               <RoomPolices />
+            </div>
+            <div className="mt-">
                <Reviews />
             </div>
          </form>

@@ -34,7 +34,7 @@ export const apartmentService = {
     return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
   // TODO: api get detail room
-  async getApartment(apartmentId: string, query: any) {
+  async getApartment(apartmentId, query) {
     const { start_date, end_date, number_of_guest, room_number, min_price, max_price } = query;
 
     const startDay = new Date(start_date);
@@ -53,6 +53,14 @@ export const apartmentService = {
     const [err, apartment] = await to(
       Apartment.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(apartmentId) } },
+        {
+          $lookup: {
+            from: 'rooms',
+            localField: '_id',
+            foreignField: 'apartmentId',
+            as: 'rooms',
+          },
+        },
         { $unwind: '$rooms' },
         {
           $match: {
@@ -90,9 +98,7 @@ export const apartmentService = {
             as: 'createBy',
           },
         },
-        {
-          $unwind: '$createBy',
-        },
+        { $unwind: '$createBy' },
         {
           $group: {
             _id: '$_id',
@@ -165,7 +171,6 @@ export const apartmentService = {
       StatusCodes.OK
     );
   },
-
   async createApartment(
     createBy: string,
     title: string,
@@ -584,7 +589,7 @@ export const apartmentService = {
     );
   },
 
-  async findRoomById(roomId: string, query: any) {
+  async findRoomById(roomId, query) {
     const { start_date, end_date, room_number } = query;
 
     const roomIdObj = new mongoose.Types.ObjectId(roomId);
@@ -608,14 +613,12 @@ export const apartmentService = {
     }
 
     const pipeline = [
-      { $match: { 'rooms._id': roomIdObj } },
-      { $unwind: '$rooms' },
-      { $match: { 'rooms._id': roomIdObj } },
+      { $match: { _id: roomIdObj } },
       {
         $match: {
           $or: [
             {
-              'rooms.unavailableDateRanges': {
+              unavailableDateRanges: {
                 $not: {
                   $elemMatch: {
                     startDay: { $lte: startDay },
@@ -624,41 +627,50 @@ export const apartmentService = {
                 },
               },
             },
-            { 'rooms.unavailableDateRanges': { $exists: false } },
+            { unavailableDateRanges: { $exists: false } },
           ],
         },
       },
       {
         $match: {
-          'rooms.quantity': { $gte: Number.parseInt(room_number, 10) || 1 },
+          quantity: { $gte: Number.parseInt(room_number, 10) || 1 },
         },
       },
       {
         $lookup: {
-          from: 'services',
-          localField: 'rooms.services',
+          from: 'apartments',
+          localField: 'apartmentId',
           foreignField: '_id',
-          as: 'rooms.services',
+          as: 'apartment',
+        },
+      },
+      { $unwind: '$apartment' },
+      {
+        $lookup: {
+          from: 'services',
+          localField: 'services',
+          foreignField: '_id',
+          as: 'services',
         },
       },
       {
         $project: {
           _id: 0,
-          title: 1,
-          location: 1,
+          title: '$apartment.title',
+          location: '$apartment.location',
           room: {
-            _id: '$rooms._id',
-            price: '$rooms.price',
-            size: '$rooms.size',
-            roomType: '$rooms.roomType',
-            numberOfGuest: '$rooms.numberOfGuest',
-            quantity: '$rooms.quantity',
-            reviews: '$rooms.reviews',
+            _id: '$_id',
+            price: '$price',
+            size: '$size',
+            roomType: '$roomType',
+            numberOfGuest: '$numberOfGuest',
+            quantity: '$quantity',
+            reviews: '$reviews',
             services: {
               $slice: [
                 {
                   $map: {
-                    input: '$rooms.services',
+                    input: '$services',
                     as: 'service',
                     in: {
                       title: '$$service.title',
@@ -675,7 +687,7 @@ export const apartmentService = {
       { $limit: 1 },
     ];
 
-    const result = await Apartment.aggregate(pipeline).exec();
+    const result = await Room.aggregate(pipeline).exec();
 
     if (!result || result.length === 0) {
       return new ServiceResponse(ResponseStatus.Failed, 'Room not found or unavailable', null, StatusCodes.NOT_FOUND);
