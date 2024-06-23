@@ -16,7 +16,6 @@ export const validateRequest = (schema: ZodSchema) => async (req: Request, res: 
     req.params = parsed.params;
     next();
   } catch (err) {
-    console.error(err);
     const errorMessage = `Invalid input: ${(err as ZodError).errors.map((e) => e.path).join(' | ')}`;
     const statusCode = StatusCodes.BAD_REQUEST;
     res.status(statusCode).send(new ServiceResponse<null>(ResponseStatus.Failed, errorMessage, null, statusCode));
