@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import * as controller from '@/api/auth/authController';
 import { userLoginSchema, userSignUpSchema } from '@/api/auth/authModel';
-import { UserSchema } from '@/api/user/userModel';
+import { UserSchema } from '@/api/user/userSchema';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
 
@@ -140,7 +140,7 @@ router.get(
     })(req, res, next);
   },
   (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/signin-success/${(req?.user as IUserDecode)._id}`);
+    res.redirect(`${process.env.CLIENT_URL}/signin-success/${(req?.user as UserDecode)._id}`);
   }
 );
 
@@ -171,7 +171,7 @@ router.get(
     })(req, res, next);
   },
   (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/signin-success/${(req?.user as IUserDecode)._id}`);
+    res.redirect(`${process.env.CLIENT_URL}/signin-success/${(req?.user as UserDecode)._id}`);
   }
 );
 

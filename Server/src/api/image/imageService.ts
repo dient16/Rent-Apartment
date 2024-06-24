@@ -5,7 +5,7 @@ import type { GridFSBucket } from 'mongodb';
 import type { Connection } from 'mongoose';
 import mongoose from 'mongoose';
 
-import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 import { env } from '@/common/utils/envConfig';
 
 const { MONGODB_URL, SERVER_URL } = env;

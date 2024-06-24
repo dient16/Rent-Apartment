@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 import Apartment from '@/api/apartment/apartmentModel';
 import User, { User as IUser } from '@/api/user/userModel';
-import { ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import { ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 import { sendMail } from '@/common/utils/helpers';
 
 import Booking, { IBooking } from './bookingModel';

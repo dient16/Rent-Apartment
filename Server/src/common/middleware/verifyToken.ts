@@ -14,7 +14,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
           message: 'Invalid access token!!!',
         });
       }
-      req.user = decode as IUserDecode;
+      req.user = decode as UserDecode;
       next();
     });
   } else {
@@ -26,7 +26,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
 };
 
 export const verifyIsAdmin = (req: Request, res: Response, next: NextFunction) => {
-  const user = req.user as IUserDecode;
+  const user = req.user as UserDecode;
   if (!user?.isAdmin) {
     return res.status(StatusCodes.UNAUTHORIZED).json({
       status: false,
