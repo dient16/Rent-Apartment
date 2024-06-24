@@ -1,13 +1,16 @@
 import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import type { Router } from 'express';
 import express from 'express';
+import { z } from 'zod';
 
 import * as controller from '@/api/user/userController';
-import { putUserSchema, UserSchema } from '@/api/user/userModel';
+import { UserSchema } from '@/api/user/userSchema';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import upload from '@/common/middleware/uploadFile';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
 import { validateRequest } from '@/common/utils/httpHandlers';
+
+import { commonValidations } from '../utils/commonValidation';
 
 export const userRegistry = new OpenAPIRegistry();
 
@@ -41,7 +44,17 @@ export const userRouter: Router = (() => {
     responses: createApiResponse(UserSchema, 'Success'),
   });
 
-  router.put('/', verifyAccessToken, validateRequest(putUserSchema), upload.single('avatar'), controller.editUser);
+  router.put(
+    '/',
+    verifyAccessToken,
+    validateRequest(
+      z.object({
+        params: z.object({ id: commonValidations.id }),
+      })
+    ),
+    upload.single('avatar'),
+    controller.editUser
+  );
 
   return router;
 })();

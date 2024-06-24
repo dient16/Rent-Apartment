@@ -4,18 +4,17 @@ import to from 'await-to-js';
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
-import { an } from 'vitest/dist/reporters-yx5ZTtEV';
 
-import type { IUser } from '@/api/user/userModel';
 import UserModel from '@/api/user/userModel';
-import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import type { User } from '@/api/user/userSchema';
+import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 import { env } from '@/common/utils/envConfig';
 import { generateAccessToken, generateRefreshToken, generateToken, sendMail } from '@/common/utils/helpers';
 
 const hashPassword = (password: string) => bcrypt.hashSync(password, bcrypt.genSaltSync(12));
 const { JWT_REFRESH_KEY } = env;
 export const authService = {
-  async register(email: string): Promise<ServiceResponse<IUser | null>> {
+  async register(email: string): Promise<ServiceResponse<User | null>> {
     const [errExistingUser, existingUser] = await to(UserModel.findOne({ email }));
     if (errExistingUser) {
       return new ServiceResponse(
@@ -69,7 +68,7 @@ export const authService = {
     );
   },
 
-  async confirmEmail(token: string): Promise<ServiceResponse<IUser | null>> {
+  async confirmEmail(token: string): Promise<ServiceResponse<User | null>> {
     const [errFindUser, user] = await to(UserModel.findOne({ confirmationToken: token }));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid or expired token', null, StatusCodes.BAD_REQUEST);
@@ -89,7 +88,7 @@ export const authService = {
     return new ServiceResponse(ResponseStatus.Success, 'Email confirmed', user, StatusCodes.OK);
   },
 
-  async setPassword(userId: string, password: string): Promise<ServiceResponse<IUser | null>> {
+  async setPassword(userId: string, password: string): Promise<ServiceResponse<User | null>> {
     const [errFindUser, user] = await to(UserModel.findById(userId));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
@@ -146,7 +145,7 @@ export const authService = {
       if (errPassword || !isPasswordCorrect) {
         return new ServiceResponse(ResponseStatus.Failed, 'Incorrect password', null, StatusCodes.UNAUTHORIZED);
       }
-      const { isAdmin, ...userData } = user.toObject();
+      const { isAdmin, ...userData } = user.toObject() as any;
       ['confirmationToken', 'password', 'createApartments', 'emailConfirmed', 'provider', 'refreshToken'].forEach(
         (e) => delete userData[e]
       );
@@ -215,7 +214,7 @@ export const authService = {
       StatusCodes.OK
     );
   },
-  async googleLoginSuccess(userId: string): Promise<ServiceResponse<IUser | null>> {
+  async googleLoginSuccess(userId: string): Promise<ServiceResponse<User | null>> {
     const [errFindUser, user] = await to(UserModel.findById(userId));
     if (errFindUser || !user) {
       return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);

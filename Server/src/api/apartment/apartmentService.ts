@@ -1,18 +1,21 @@
 import { default as to } from 'await-to-js';
 import { StatusCodes } from 'http-status-codes';
 import mongoose, { Types } from 'mongoose';
+import Stripe from 'stripe';
 
 import Room from '@/api/room/roomModel';
 import User from '@/api/user/userModel';
-import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
+import { env } from '@/common/utils/envConfig';
 
-import type { CreateRoom, Location } from './apartmentModel';
-import Apartment from './apartmentModel';
-
+import { roomService } from '../room/roomService';
+import ApartmentModel from './apartmentModel';
+import type { CreateRoom, Location } from './apartmentSchema';
+const { STRIPE_SECRET_KEY } = env;
 export const apartmentService = {
   async getAllApartments() {
     const [err, apartments] = await to(
-      Apartment.find({})
+      ApartmentModel.find({})
         .populate({
           path: 'rooms.services',
         })
@@ -33,25 +36,20 @@ export const apartmentService = {
 
     return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
-  // TODO: api get detail room
-  async getApartment(apartmentId, query) {
-    const { start_date, end_date, number_of_guest, room_number, min_price, max_price } = query;
 
-    const startDay = new Date(start_date);
-    const endDay = new Date(end_date);
-    const today = new Date(Date.now()).setHours(0, 0, 0, 0);
+  async getApartmentDetail(apartmentId: string, query: any) {
+    const { startDate, endDate, numberOfGuest, roomNumber, minPrice, maxPrice } = query;
 
-    if (startDay < today || endDay < today) {
+    const startDay = startDate ? new Date(startDate) : null;
+    const endDay = endDate ? new Date(endDate) : null;
+    const today = new Date(Date.now());
+
+    if ((startDay && startDay < today) || (endDay && endDay < today)) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid start or end date', null, StatusCodes.BAD_REQUEST);
     }
 
-    const numberOfGuest = Number.parseInt(number_of_guest, 10) || 1;
-    const roomNumber = Number.parseInt(room_number, 10) || 1;
-    const minPrice = Number.parseInt(min_price, 10) || 0;
-    const maxPrice = Number.parseInt(max_price, 10) || 1000000000;
-
     const [err, apartment] = await to(
-      Apartment.aggregate([
+      ApartmentModel.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(apartmentId) } },
         {
           $lookup: {
@@ -171,64 +169,55 @@ export const apartmentService = {
       StatusCodes.OK
     );
   },
+
   async createApartment(
     createBy: string,
     title: string,
-    rooms: CreateRoom[],
+    description: string,
     location: Location,
-    files: Express.Multer.File[]
+    rooms: CreateRoom[],
+    roomImagesMap: Record<number, Express.Multer.File[]>,
+    houseRules?: string[],
+    checkInTime?: string,
+    checkOutTime?: string,
+    safetyInfo?: string[],
+    cancellationPolicy?: string[],
+    discounts?: string[]
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      const roomPromises = rooms.map(async (room, index) => {
-        const fieldName = `rooms[${index}][images]`;
-        const roomImages = files.filter((image: any) => image.fieldname === fieldName) || [];
-        const images = roomImages.map((file: any) => file?.filename);
+      const roomIds: Types.ObjectId[] = [];
 
-        const services = room.services.map((service: any) => new Types.ObjectId(service));
+      for (const [index, room] of rooms.entries()) {
+        const roomImages = (roomImagesMap[index] || []).map((file) => ({ filename: file.filename }));
+        const roomResponse = await roomService.addRoomToApartment(createBy, room, roomImages, session);
 
-        const [err, newRoom] = await to(
-          Room.create(
-            [
-              {
-                ...room,
-                images,
-                services,
-                apartmentId: null,
-              },
-            ],
-            { session }
-          )
-        );
-
-        if (err || !newRoom || newRoom.length === 0) {
-          return new ServiceResponse(
-            ResponseStatus.Failed,
-            'Failed to create room',
-            null,
-            StatusCodes.INTERNAL_SERVER_ERROR
-          );
+        if (roomResponse.success) {
+          await session.abortTransaction();
+          return roomResponse;
         }
 
-        return newRoom[0]._id;
-      });
-
-      const roomIds = await Promise.all(roomPromises);
-      if (roomIds.some((id) => id instanceof ServiceResponse)) {
-        await session.abortTransaction();
-        return roomIds.find((id) => id instanceof ServiceResponse) as ServiceResponse;
+        roomIds.push(roomResponse.data!._id);
       }
 
       const [errApartment, newApartment] = await to(
-        Apartment.create(
+        ApartmentModel.create(
           [
             {
               title,
-              createBy,
+              description,
               location,
+              owner: createBy,
               rooms: roomIds,
+              images: [], // Assuming apartment images are handled separately
+              houseRules,
+              checkInTime,
+              checkOutTime,
+              safetyInfo,
+              cancellationPolicy,
+              discounts,
             },
           ],
           { session }
@@ -240,20 +229,6 @@ export const apartmentService = {
         return new ServiceResponse(
           ResponseStatus.Failed,
           'Failed to create apartment',
-          null,
-          StatusCodes.INTERNAL_SERVER_ERROR
-        );
-      }
-
-      const [errUpdateRooms] = await to(
-        Room.updateMany({ _id: { $in: roomIds } }, { $set: { apartmentId: newApartment[0]._id } }, { session })
-      );
-
-      if (errUpdateRooms) {
-        await session.abortTransaction();
-        return new ServiceResponse(
-          ResponseStatus.Failed,
-          'Failed to update rooms',
           null,
           StatusCodes.INTERNAL_SERVER_ERROR
         );
@@ -276,7 +251,7 @@ export const apartmentService = {
       await session.commitTransaction();
       session.endSession();
 
-      const populatedRooms = await Room.find({ _id: { $in: roomIds } }).populate('services');
+      const populatedRooms = await Room.find({ _id: { $in: roomIds } }).populate('amenities');
 
       const response = {
         ...newApartment[0].toObject(),
@@ -296,6 +271,7 @@ export const apartmentService = {
       session.endSession();
     }
   },
+
   async searchApartments(query: any) {
     const {
       numberOfGuest,
@@ -327,7 +303,7 @@ export const apartmentService = {
       price: { $gte: minPrice || 0, $lte: maxPrice },
     };
 
-    const [roomError, rooms] = await to(Room.find(roomQuery).populate('services').exec());
+    const [roomError, rooms] = await to(Room.find(roomQuery).populate('amenities').exec());
     if (roomError) {
       return new ServiceResponse(
         ResponseStatus.Failed,
@@ -352,7 +328,7 @@ export const apartmentService = {
       'rooms.price': { $gte: minPrice, $lte: maxPrice },
     };
     const [error, aggregateResult] = await to(
-      Apartment.aggregate([
+      ApartmentModel.aggregate([
         initialMatch,
         {
           $facet: {
@@ -378,7 +354,7 @@ export const apartmentService = {
                   quantity: { $first: '$rooms.quantity' },
                   reviews: { $first: '$rooms.reviews' },
                   images: { $first: '$rooms.images' },
-                  services: { $first: '$rooms.services' },
+                  amenities: { $first: '$rooms.amenities' },
                 },
               },
               {
@@ -401,8 +377,8 @@ export const apartmentService = {
                   price: '$roomPriceMin',
                   numberOfGuest: 1,
                   quantity: 1,
-                  services: {
-                    $slice: ['$services.title', 3],
+                  amenities: {
+                    $slice: ['$amenities.name', 3],
                   },
                   rating: {
                     ratingAvg: {
@@ -473,7 +449,7 @@ export const apartmentService = {
       };
     });
     const [err, updatedApartment] = await to(
-      Apartment.findByIdAndUpdate(
+      ApartmentModel.findByIdAndUpdate(
         apartmentId,
         {
           title: updateData.title,
@@ -506,11 +482,11 @@ export const apartmentService = {
     );
   },
 
-  async deleteApartment(apartmentId: string, deletedBy: string) {
+  async deleteApartment(apartmentId: string, ownerId: string) {
     const [err, deletedApartment] = await to(
-      Apartment.findOneAndDelete({
+      ApartmentModel.findOneAndDelete({
         _id: apartmentId,
-        createdBy: deletedBy,
+        owner: ownerId,
       })
     );
 
@@ -533,8 +509,8 @@ export const apartmentService = {
     }
 
     const [errUpdateUser] = await to(
-      User.findByIdAndUpdate(deletedBy, {
-        $pull: { createdApartments: deletedApartment?._id },
+      User.findByIdAndUpdate(ownerId, {
+        $pull: { createApartments: apartmentId },
       })
     );
 
@@ -552,7 +528,7 @@ export const apartmentService = {
 
   async removeRoomFromApartment(apartmentId: string, roomId: string, removedBy: string) {
     const [err, updatedApartment] = await to(
-      Apartment.findByIdAndUpdate(
+      ApartmentModel.findByIdAndUpdate(
         apartmentId,
         {
           $pull: { rooms: { _id: roomId } },
@@ -589,7 +565,7 @@ export const apartmentService = {
     );
   },
 
-  async findRoomById(roomId, query) {
+  async findRoomById(roomId: string, query: any) {
     const { start_date, end_date, room_number } = query;
 
     const roomIdObj = new mongoose.Types.ObjectId(roomId);
@@ -597,7 +573,7 @@ export const apartmentService = {
     const startDay = new Date(start_date);
     const endDay = new Date(end_date);
 
-    if (isNaN(startDay.getTime()) || isNaN(endDay.getTime())) {
+    if (Number.isNaN(startDay.getTime()) || Number.isNaN(endDay.getTime())) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid start or end date', null, StatusCodes.BAD_REQUEST);
     }
 
@@ -698,6 +674,7 @@ export const apartmentService = {
   },
 
   async createStripePayment(amount: number, description: string, source: string) {
+    const stripe = new Stripe(STRIPE_SECRET_KEY);
     const [err, paymentIntent] = await to(
       stripe.paymentIntents.create({
         amount: amount,
@@ -722,7 +699,7 @@ export const apartmentService = {
 
   async getApartmentsByUserId(userId: string) {
     const [err, apartments] = await to(
-      Apartment.find({ createBy: userId }).select('title location rooms.images rooms.price').lean()
+      ApartmentModel.find({ createBy: userId }).select('title location rooms.images rooms.price').lean().exec()
     );
 
     if (err) {
@@ -737,12 +714,14 @@ export const apartmentService = {
       );
     }
 
-    const formattedApartments = apartments.map((apartment) => ({
+    const formattedApartments = apartments.map((apartment: any) => ({
       title: apartment.title,
       location: apartment.location,
       image:
-        apartment.rooms.length > 0 ? `${process.env.SERVER_URI}/api/image/${apartment.rooms[0].images[0]}` : undefined,
-      price: apartment.rooms.length > 0 ? apartment.rooms[0].price : undefined,
+        apartment.rooms?.length && apartment.rooms[0].images?.length
+          ? `${process.env.SERVER_URI}/api/image/${apartment.rooms[0].images[0]}`
+          : undefined,
+      price: apartment.rooms?.length ? apartment.rooms[0].price : undefined,
     }));
 
     return new ServiceResponse(

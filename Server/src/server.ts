@@ -7,13 +7,13 @@ import helmet from 'helmet';
 import mogran from 'morgan';
 import { pino } from 'pino';
 
+import { dbConnect } from '@/common/config/dbConfig';
+import passport from '@/common/config/passportConfig';
 import errorHandler from '@/common/middleware/errorHandler';
 import rateLimiter from '@/common/middleware/rateLimiter';
 import requestLogger from '@/common/middleware/requestLogger';
+import initRoutes from '@/common/routes';
 import { env } from '@/common/utils/envConfig';
-import { dbConnect } from '@/config/dbConfig';
-import passport from '@/config/passportConfig';
-import initRoutes from '@/routes';
 
 const logger = pino({ name: 'server start' });
 const app: Express = express();

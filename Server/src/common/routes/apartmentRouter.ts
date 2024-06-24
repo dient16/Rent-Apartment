@@ -3,7 +3,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as controller from '@/api/apartment/apartmentController';
-import { apartmentSchema, createApartmentSchema, searchRoomSchema } from '@/api/apartment/apartmentModel';
+import {
+  apartmentSchema,
+  createApartmentSchema,
+  getApartmentQuerySchema,
+  searchRoomSchema,
+} from '@/api/apartment/apartmentSchema';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import upload from '@/common/middleware/uploadFile';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
@@ -86,7 +91,7 @@ apartmentRegistry.registerPath({
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
-router.get('/:apartmentId', controller.getApartment);
+router.get('/:apartmentId', validateRequest(getApartmentQuerySchema), controller.getApartmentDetail);
 
 apartmentRegistry.registerPath({
   method: 'put',

@@ -1,12 +1,12 @@
 import { OpenApiGeneratorV3, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 
 import { healthCheckRegistry } from '@/api/healthCheck/healthCheckRouter';
-import { apartmentRegistry } from '@/routes/apartmentRouter';
-import { authRegistry } from '@/routes/authRouter';
-import { bookingRegistry } from '@/routes/bookingRouter';
-import { imageRegistry } from '@/routes/imageRouter';
-import { serviceRegistry } from '@/routes/serviceRouter';
-import { userRegistry } from '@/routes/userRouter';
+import { amenityRegistry } from '@/common/routes/amenityRouter';
+import { apartmentRegistry } from '@/common/routes/apartmentRouter';
+import { authRegistry } from '@/common/routes/authRouter';
+import { bookingRegistry } from '@/common/routes/bookingRouter';
+import { imageRegistry } from '@/common/routes/imageRouter';
+import { userRegistry } from '@/common/routes/userRouter';
 
 export function generateOpenAPIDocument() {
   const registry = new OpenAPIRegistry([
@@ -14,7 +14,7 @@ export function generateOpenAPIDocument() {
     userRegistry,
     authRegistry,
     apartmentRegistry,
-    serviceRegistry,
+    amenityRegistry,
     bookingRegistry,
     imageRegistry,
   ]);

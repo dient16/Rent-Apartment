@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { z } from 'zod';
 
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
-import { ResponseStatus, ServiceResponse } from '@/common/schemaResponse/serviceResponse';
+import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 import { handleServiceResponse } from '@/common/utils/httpHandlers';
 
 export const healthCheckRegistry = new OpenAPIRegistry();
