@@ -9,7 +9,6 @@ export const path: { [key: string]: string } = {
    APARTMENT_DETAIL: 'apartment/:apartmentId',
    FAVORITES: 'favorites',
    CONTACT: 'contact',
-   CREATE_APARTMENT: 'create-apartment',
    BOOKING_CONFIRM: 'booking-confirm',
    BOOKING_COMPLETION: 'booking-completion/:bookingId',
    ACCOUNT_SETTINGS: 'account-settings',
@@ -25,9 +24,10 @@ export const path: { [key: string]: string } = {
    REPORTS: 'admin/reports',
 
    // path to host
-   HOST_ROOT: '/host',
+   HOST_ROOT: '/host/',
    HOST_DASHBOARD: 'dashboard',
    HOST_CALENDAR: 'calendar',
+   CREATE_APARTMENT: 'create-apartment',
    HOST_LISTINGS: 'listings',
    HOST_BOOKINGS: 'bookings',
    HOST_PROFILE: 'profile',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Table, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { path } from '@/utils/constant';
 
 interface RentalItem {
    key: string;
@@ -49,7 +50,7 @@ const RentalListPage: React.FC = () => {
    };
 
    const navigateToCreateApartment = () => {
-      navigate('/create-apartment');
+      navigate(`${path.HOST_ROOT}${path.CREATE_APARTMENT}`);
    };
 
    const columns = [

@@ -9,6 +9,7 @@ import {
    HostBookings,
    HostProfile,
    HostCalendar,
+   CreateApartment,
 } from '@/pages/host';
 import {
    ApartmentDetail,
@@ -25,10 +26,8 @@ import {
 } from '@/pages/public';
 import { path } from '@/utils/constant';
 import {
-   CreateApartment,
    ManageAccount,
    MyFavorites,
-   ManagerApartment,
    PersonalInformation,
    MyBooking,
    BookingDetail,
@@ -41,10 +40,6 @@ const Router = () => {
       {
          path: path.HOME,
          element: <Home />,
-      },
-      {
-         path: path.CREATE_APARTMENT,
-         element: <CreateApartment />,
       },
       {
          path: path.LISTING,
@@ -114,10 +109,6 @@ const Router = () => {
                path: path.PERSONAL_INFORMATION,
                element: <PersonalInformation />,
             },
-            {
-               path: path.MANAGE_APARTMENT,
-               element: <ManagerApartment />,
-            },
          ],
       },
       {
@@ -146,6 +137,10 @@ const Router = () => {
       {
          path: path.HOST_PROFILE,
          element: <HostProfile />,
+      },
+      {
+         path: path.CREATE_APARTMENT,
+         element: <CreateApartment />,
       },
    ];
 
