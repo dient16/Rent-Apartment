@@ -1,5 +1,4 @@
-// src/components/CreateApartmentForm/Step2.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import RoomDetailsForm from './RoomDetailsForm';
 import RoomImagesForm from './RoomImagesForm';
@@ -7,27 +6,39 @@ import { Tabs, Button, message } from 'antd';
 
 const { TabPane } = Tabs;
 
-const Step2: React.FC = () => {
-   const { control, getValues, trigger } = useFormContext();
+interface Step2Props {
+   setShowButtons: (show: boolean) => void;
+}
+
+const Step2: React.FC<Step2Props> = ({ setShowButtons }) => {
+   const { control, getValues, trigger, watch } = useFormContext();
    const { fields, append, remove } = useFieldArray({
       control,
       name: 'rooms',
    });
-   const [currentRoomIndex, setCurrentRoomIndex] = useState<number | null>(
-      null,
-   );
+   const [currentRoomIndex, setCurrentRoomIndex] = useState<number | null>(0);
    const [subStep, setSubStep] = useState<'details' | 'images' | 'addAnother'>(
       'details',
    );
+
+   useEffect(() => {
+      if (fields.length === 0) {
+         addNewRoom();
+      }
+   }, [fields.length]);
+
+   useEffect(() => {
+      setShowButtons(subStep === 'addAnother');
+   }, [subStep, setShowButtons]);
 
    const addNewRoom = () => {
       append({
          roomType: '',
          amenities: [],
-         size: 0,
-         price: 0,
-         numberOfGuest: 0,
-         quantity: 0,
+         size: '',
+         price: '',
+         numberOfGuest: '',
+         quantity: '',
          images: [],
       });
       setCurrentRoomIndex(fields.length);
@@ -47,10 +58,20 @@ const Step2: React.FC = () => {
       }
    };
 
+   const handleBackSubStep = () => {
+      if (subStep === 'images') {
+         setSubStep('details');
+      } else if (subStep === 'addAnother') {
+         setSubStep('images');
+      }
+   };
+
    const handleAddAnotherRoom = () => {
       addNewRoom();
       setSubStep('details');
    };
+
+   const roomTypes = watch('rooms');
 
    return (
       <div className="p-6">
@@ -74,9 +95,13 @@ const Step2: React.FC = () => {
             }}
             tabBarStyle={{ fontSize: '1.25rem' }}
          >
-            {fields.map((item, index) => (
+            {fields.map((_item, index) => (
                <TabPane
-                  tab={item.roomType || `Room ${index + 1}`}
+                  tab={
+                     <span className="font-main text-lg px-4 py-2 border bg-sky-100 rounded-full select-none">
+                        {roomTypes?.[index]?.roomType || `Room ${index + 1}`}
+                     </span>
+                  }
                   key={String(index)}
                   closable={fields.length > 1}
                >
@@ -86,23 +111,17 @@ const Step2: React.FC = () => {
                            <RoomDetailsForm index={index} />
                         )}
                         {subStep === 'images' && (
-                           <>
-                              <p className="text-xl font-medium text-gray-700 mb-4">
-                                 Room Type:{' '}
-                                 {getValues(`rooms.${index}.roomType`)}
-                              </p>
-                              <RoomImagesForm index={index} />
-                           </>
+                           <RoomImagesForm index={index} />
                         )}
                         {subStep === 'addAnother' && (
-                           <div className="text-center">
+                           <div className="text-center h-full">
                               <p className="text-xl font-medium text-gray-700 mb-4">
                                  Do you want to add another room?
                               </p>
                               <Button
                                  type="primary"
                                  onClick={handleAddAnotherRoom}
-                                 className="mr-4"
+                                 className="mr-4 bg-blue-500"
                               >
                                  Yes
                               </Button>
@@ -112,17 +131,29 @@ const Step2: React.FC = () => {
                            </div>
                         )}
                         <div className="flex justify-between mt-4">
-                           <Button type="danger" onClick={() => remove(index)}>
+                           <Button danger onClick={() => remove(index)}>
                               Remove Room
                            </Button>
-                           {subStep !== 'addAnother' && (
-                              <Button
-                                 type="primary"
-                                 onClick={handleNextSubStep}
-                              >
-                                 Next
-                              </Button>
-                           )}
+                           <div className="flex space-x-4">
+                              {subStep !== 'details' && (
+                                 <Button
+                                    size="large"
+                                    onClick={handleBackSubStep}
+                                 >
+                                    Back
+                                 </Button>
+                              )}
+                              {subStep !== 'addAnother' && (
+                                 <Button
+                                    type="primary"
+                                    onClick={handleNextSubStep}
+                                    size="large"
+                                    className="bg-blue-500"
+                                 >
+                                    Next
+                                 </Button>
+                              )}
+                           </div>
                         </div>
                      </>
                   )}

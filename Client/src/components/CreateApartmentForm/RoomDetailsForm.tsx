@@ -1,124 +1,110 @@
-// src/components/CreateApartmentForm/RoomDetailsForm.tsx
-import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useState } from 'react';
+import { useFormContext, Controller } from 'react-hook-form';
+import InputField from '@/components/Input/InputField';
+import RoomAmenitiesSelector from './RoomAmenitiesSelector';
 
 interface RoomDetailsFormProps {
    index: number;
 }
 
+const amenities = [
+   {
+      label: 'Wi-Fi',
+      value: 'wifi',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'TV',
+      value: 'tv',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'Kitchen',
+      value: 'kitchen',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'Washer',
+      value: 'washer',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'Free Parking on Premises',
+      value: 'free_parking',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'Paid Parking on Premises',
+      value: 'paid_parking',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'Air Conditioning',
+      value: 'air_conditioning',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+   {
+      label: 'Dedicated Workspace',
+      value: 'workspace',
+      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
+   },
+];
+
 const RoomDetailsForm: React.FC<RoomDetailsFormProps> = ({ index }) => {
-   const {
-      register,
-      formState: { errors },
-   } = useFormContext();
+   const { control } = useFormContext();
+   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
    return (
       <div className="mb-6 border-b pb-4">
          <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-700">
-               Room Type
-            </label>
-            <input
-               {...register(`rooms.${index}.roomType`, {
-                  required: 'Room type is required',
-               })}
-               placeholder="Room Type"
-               className="mt-2 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg"
+            <InputField
+               name={`rooms.${index}.roomType`}
+               label="Room Type"
+               rules={{ required: 'Room type is required' }}
             />
-            {errors.rooms?.[index]?.roomType && (
-               <p className="text-red-500 mt-1">
-                  {errors.rooms?.[index]?.roomType?.message}
-               </p>
-            )}
          </div>
-         <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-700">
-               Size
-            </label>
-            <input
-               {...register(`rooms.${index}.size`, {
-                  required: 'Size is required',
-               })}
-               placeholder="Size"
+         <div className="grid grid-cols-2 gap-4 mb-6">
+            <InputField
+               name={`rooms.${index}.size`}
+               label="Size"
                type="number"
-               className="mt-2 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg"
+               rules={{ required: 'Size is required' }}
             />
-            {errors.rooms?.[index]?.size && (
-               <p className="text-red-500 mt-1">
-                  {errors.rooms?.[index]?.size?.message}
-               </p>
-            )}
-         </div>
-         <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-700">
-               Price
-            </label>
-            <input
-               {...register(`rooms.${index}.price`, {
-                  required: 'Price is required',
-               })}
-               placeholder="Price"
+            <InputField
+               name={`rooms.${index}.price`}
+               label="Price"
                type="number"
-               className="mt-2 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg"
+               rules={{ required: 'Price is required' }}
             />
-            {errors.rooms?.[index]?.price && (
-               <p className="text-red-500 mt-1">
-                  {errors.rooms?.[index]?.price?.message}
-               </p>
-            )}
-         </div>
-         <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-700">
-               Number of Guests
-            </label>
-            <input
-               {...register(`rooms.${index}.numberOfGuest`, {
-                  required: 'Number of guests is required',
-               })}
-               placeholder="Number of Guests"
+            <InputField
+               name={`rooms.${index}.numberOfGuest`}
+               label="Number of Guests"
                type="number"
-               className="mt-2 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg"
+               rules={{ required: 'Number of guests is required' }}
             />
-            {errors.rooms?.[index]?.numberOfGuest && (
-               <p className="text-red-500 mt-1">
-                  {errors.rooms?.[index]?.numberOfGuest?.message}
-               </p>
-            )}
-         </div>
-         <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-700">
-               Quantity
-            </label>
-            <input
-               {...register(`rooms.${index}.quantity`, {
-                  required: 'Quantity is required',
-               })}
-               placeholder="Quantity"
+            <InputField
+               name={`rooms.${index}.quantity`}
+               label="Quantity"
                type="number"
-               className="mt-2 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg"
+               rules={{ required: 'Quantity is required' }}
             />
-            {errors.rooms?.[index]?.quantity && (
-               <p className="text-red-500 mt-1">
-                  {errors.rooms?.[index]?.quantity?.message}
-               </p>
-            )}
          </div>
-         <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-700">
-               Amenities
-            </label>
-            <input
-               {...register(`rooms.${index}.amenities`, {
-                  required: 'Amenities are required',
-               })}
-               placeholder="Amenities (comma separated)"
-               className="mt-2 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-lg"
+         <div>
+            <Controller
+               name={`rooms.${index}.amenities`}
+               control={control}
+               defaultValue={[]}
+               render={({ field }) => (
+                  <RoomAmenitiesSelector
+                     options={amenities}
+                     selectedValues={field.value}
+                     onChange={(selected) => {
+                        field.onChange(selected);
+                        setSelectedAmenities(selected);
+                     }}
+                  />
+               )}
             />
-            {errors.rooms?.[index]?.amenities && (
-               <p className="text-red-500 mt-1">
-                  {errors.rooms?.[index]?.amenities?.message}
-               </p>
-            )}
          </div>
       </div>
    );

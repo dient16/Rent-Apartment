@@ -52,7 +52,7 @@ const InputField: React.FC<InputFieldProps> = ({
             <div>
                <div
                   className={clsx(
-                     'relative input-container border border-gray-400 rounded-md transition-all px-3 z-10',
+                     'relative input-container border border-gray-400 rounded-md transition-all px-3 z-10 select-none',
                      {
                         'border-green-700': field.value || field.value === 0,
                      },
@@ -64,8 +64,8 @@ const InputField: React.FC<InputFieldProps> = ({
                      parser={parser}
                      {...field}
                      className={clsx(
-                        'font-main text-lg input-field',
-                        type === 'number' ? 'py-3' : 'h-16',
+                        'font-main text-md input-field',
+                        type === 'number' ? '' : 'h-16',
                         type === 'textarea' ? 'mt-5' : 'h-16',
                         className,
                      )}
@@ -74,7 +74,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   />
                   <label
                      className={clsx(
-                        'text-lg absolute left-6 transform -translate-y-1/2 text-gray-600 transition-all duration-200 input-label',
+                        'text-md absolute left-6 transform -translate-y-1/2 text-gray-600 transition-all duration-200 input-label',
                         type === 'textarea' ? 'top-9' : 'top-1/2',
                         {
                            'text-sm transform -translate-y-8 left-5':

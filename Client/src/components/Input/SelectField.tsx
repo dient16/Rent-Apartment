@@ -33,7 +33,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
             <div>
                <div
                   className={clsx(
-                     'relative border border-gray-400 rounded-md transition-all px-2',
+                     'relative border border-gray-400 rounded-md transition-all px-2 select-none',
                      {
                         'border-green-700': field.value || field.value === 0,
                      },
@@ -62,7 +62,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
                   </Select>
                   <label
                      className={clsx(
-                        'text-lg absolute left-5 transform -translate-y-1/2 text-gray-600 transition-all duration-200',
+                        'text-md absolute left-5 transform -translate-y-1/2 text-gray-600 transition-all duration-200',
                         'top-1/2',
                         {
                            'text-sm transform -translate-y-8':

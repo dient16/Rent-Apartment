@@ -13,6 +13,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
+delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
    iconRetinaUrl: markerIcon2x,
    iconUrl: markerIcon,
@@ -194,11 +195,11 @@ const Step1: React.FC = () => {
                   </div>
                </div>
             </div>
-            <div className="lg:w-1/2 lg:pl-6 mt-6 lg:mt-0">
+            <div className="lg:w-1/2 lg:pl-6 mt-6 lg:mt-6 h-96">
                <MapContainer
                   center={[10.762622, 106.660172]}
                   zoom={13}
-                  className="h-full rounded-md shadow-sm"
+                  className="w-full h-full rounded-md shadow-sm"
                >
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   <LocationMarker />
