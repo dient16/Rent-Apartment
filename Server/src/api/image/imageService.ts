@@ -96,23 +96,29 @@ export const getFileByFilenameService = async (filename: string): Promise<Servic
   const [err, files] = await to(gfs.find({ filename }).toArray());
 
   if (err) {
-    return new ServiceResponse<any>(ResponseStatus.Failed, 'Error fetching file', null, 500);
+    return new ServiceResponse(ResponseStatus.Failed, 'Error fetching file', null, 500);
   }
 
   if (!files[0] || files.length === 0) {
-    return new ServiceResponse<any>(ResponseStatus.Failed, 'File not found', null, 404);
+    return new ServiceResponse(ResponseStatus.Failed, 'File not found', null, 404);
   }
 
-  return new ServiceResponse<any>(ResponseStatus.Success, 'File retrieved successfully', files[0], 200);
+  return new ServiceResponse(ResponseStatus.Success, 'File retrieved successfully', files[0], 200);
 };
 
-export const deleteFileByFileNameService = async (id: string): Promise<ServiceResponse<any>> => {
+export const deleteFileByFileNameService = async (filename: string): Promise<ServiceResponse<any>> => {
   const gfs = await gfsPromise;
-  const [err, result] = await to(gfs.delete(new mongoose.Types.ObjectId(id)));
+  const [findErr, files] = await to(gfs.find({ filename }).toArray());
 
-  if (err) {
-    return new ServiceResponse<any>(ResponseStatus.Failed, 'Error deleting file', null, 500);
+  if (findErr || !files || files.length === 0) {
+    return new ServiceResponse(ResponseStatus.Failed, 'File not found', null, 404);
   }
 
-  return new ServiceResponse<any>(ResponseStatus.Success, 'File deleted successfully', result, 200);
+  const [deleteErr, result] = await to(gfs.delete(new mongoose.Types.ObjectId(files[0]._id)));
+
+  if (deleteErr) {
+    return new ServiceResponse(ResponseStatus.Failed, 'Error deleting file', null, 500);
+  }
+
+  return new ServiceResponse(ResponseStatus.Success, 'File deleted successfully', result, 200);
 };

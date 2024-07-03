@@ -42,20 +42,6 @@ export const createApartment = async (req: Request, res: Response, next: NextFun
       discounts,
     } = req.body;
     const { _id: userId } = req.user as UserDecode;
-    const files = req.files as Express.Multer.File[];
-
-    const roomImagesMap: Record<number, Express.Multer.File[]> = {};
-
-    files.forEach((file) => {
-      const match = file.fieldname.match(/rooms\[(\d+)\]\[images\]/);
-      if (match) {
-        const roomIndex = Number.parseInt(match[1], 10);
-        if (!roomImagesMap[roomIndex]) {
-          roomImagesMap[roomIndex] = [];
-        }
-        roomImagesMap[roomIndex].push(file);
-      }
-    });
 
     const serviceResponse = await apartmentService.createApartment(
       userId,
@@ -63,7 +49,6 @@ export const createApartment = async (req: Request, res: Response, next: NextFun
       description,
       location,
       rooms,
-      roomImagesMap,
       houseRules,
       checkInTime,
       checkOutTime,

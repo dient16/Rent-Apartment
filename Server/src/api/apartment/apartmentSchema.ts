@@ -1,7 +1,7 @@
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
 
-import { parseJson, stringToDate, stringToFloat, stringToNumber } from '@/common/utils/helpers';
+import { stringToDate, stringToFloat, stringToNumber } from '@/common/utils/helpers';
 
 import { userDecodeSchema } from '../user/userSchema';
 import { locationSchema } from './locationSchema';
@@ -55,20 +55,28 @@ export const searchRoomSchema = z.object({
 });
 
 const roomSchema = z.object({
-  services: z.array(z.string()),
-  description: z.string(),
+  amenities: z.array(z.string()),
   size: z.number(),
   price: z.number(),
+  images: z.array(z.string()),
   roomType: z.string(),
   numberOfGuest: z.number(),
   quantity: z.number(),
 });
 export const createApartmentSchema = z.object({
   body: z.object({
-    title: parseJson(z.string()),
-    rooms: parseJson(z.array(roomSchema)),
-    location: parseJson(locationSchema),
+    title: z.string(),
+    description: z.string(),
+    location: locationSchema,
+    rooms: z.array(roomSchema),
+    houseRules: z.array(z.string()).optional(),
+    checkInTime: z.string().optional(),
+    checkOutTime: z.string().optional(),
+    safetyInfo: z.array(z.string()).optional(),
+    cancellationPolicy: z.string().optional(),
+    discountPolicies: z.array(z.string()).optional(),
   }),
+
   user: userDecodeSchema,
 });
 

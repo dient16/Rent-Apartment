@@ -2,11 +2,12 @@ import to from 'await-to-js';
 import { StatusCodes } from 'http-status-codes';
 
 import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
+import { env } from '@/common/utils/envConfig';
 import { logger } from '@/server';
 
 import AmenityModel from './amenityModel';
 import type { Amenity } from './amenitySchema';
-
+const { SERVER_URL } = env;
 export const amenityService = {
   async createAmenity(name: string, description?: string, icon?: string): Promise<ServiceResponse<Amenity | null>> {
     const [errExistingAmenity, existingAmenity] = await to(AmenityModel.findOne({ name }).exec());
@@ -51,10 +52,14 @@ export const amenityService = {
       return new ServiceResponse(ResponseStatus.Failed, 'No amenities found', null, StatusCodes.NOT_FOUND);
     }
 
+    const updatedAmenities = amenities.map((amenity) => ({
+      ...amenity.toObject(),
+      icon: `${SERVER_URL}/api/image/${amenity.icon}`,
+    }));
     return new ServiceResponse<Amenity[]>(
       ResponseStatus.Success,
       'Get amenities successfully',
-      amenities,
+      updatedAmenities,
       StatusCodes.OK
     );
   },

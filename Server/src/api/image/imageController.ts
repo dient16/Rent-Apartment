@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { handleServiceResponse } from '@/common/utils/httpHandlers';
+
 import {
   deleteFileByFileNameService,
   getAllFilesService,
@@ -11,11 +13,8 @@ import {
 
 export const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const link = await uploadImageService(req.file?.filename as string);
-    res.status(200).json({
-      success: true,
-      data: { link },
-    });
+    const response = await uploadImageService(req.file?.filename as string);
+    handleServiceResponse(response, res);
   } catch (error) {
     next(error);
   }
