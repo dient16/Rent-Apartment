@@ -1,33 +1,48 @@
-interface ApartmentType {
-    title: string;
-    location: Location;
-    rooms: Room[];
-}
+type Room = {
+   roomType: string;
+   amenities: string[];
+   size: number;
+   price: number;
+   numberOfGuest: number;
+   quantity: number;
+   images: ({ response: { url: string } } | string)[];
+};
+
+type Apartment = {
+   title: string;
+   description: string;
+   location: {
+      long: number;
+      lat: number;
+      province: string;
+      district: string;
+      ward: string;
+      street: string;
+   };
+   rooms: Room[];
+   houseRules: string[];
+   checkInTime: string;
+   checkOutTime: string;
+   safetyInfo: string[];
+   cancellationPolicy: string;
+   discounts: string[];
+};
 interface Location {
-    longitude: number;
-    latitude: number;
-    province: string;
-    district: string;
-    ward: string;
-    street: string;
+   long: number;
+   lat: number;
+   province: string;
+   district: string;
+   ward: string;
+   street: string;
 }
-interface Room {
-    services: string[];
-    description: string;
-    price: number;
-    size: number;
-    numberOfGuest: number;
-    images: [];
-    roomType: string;
-    quantity: number;
-}
+
 interface SearchData {
-    searchText: string;
-    searchDate: [Date, Date];
-    searchGuest: {
-        guest: number;
-        room: number;
-    };
-    room: number;
-    searchPrice?: number;
+   searchText: string;
+   searchDate: [Date, Date];
+   searchGuest: {
+      guest: number;
+      room: number;
+   };
+   room: number;
+   searchPrice?: number;
 }

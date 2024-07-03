@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import type { Amenity } from './amenitySchema';
 
 const COLLECTION = 'amenities';
-const DOCUMENT = 'amenity';
+const DOCUMENT = 'Amenity';
 
 const amenityMongooseSchema = new mongoose.Schema(
   {

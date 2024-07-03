@@ -8,6 +8,7 @@ import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import { verifyAccessToken, verifyIsAdmin } from '@/common/middleware/verifyToken';
 import { validateRequest } from '@/common/utils/httpHandlers';
 
+import upload from '../middleware/uploadFile';
 import { commonValidations } from '../utils/commonValidation';
 
 export const amenityRegistry = new OpenAPIRegistry();
@@ -44,7 +45,13 @@ export const amenityRouter: Router = (() => {
 
   router.post(
     '/',
-    validateRequest(amenitySchema.omit({ _id: true, createdAt: true, updatedAt: true })),
+    upload.single('icon'),
+    validateRequest(
+      z.object({
+        body: amenitySchema.omit({ _id: true, createdAt: true, updatedAt: true }),
+        image: z.object({ filename: z.string() }),
+      })
+    ),
     controller.createAmenity
   );
 

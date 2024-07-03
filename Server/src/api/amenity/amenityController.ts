@@ -6,7 +6,8 @@ import { amenityService } from './amenityService';
 
 export const createAmenity = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, description, icon } = req.body;
+    const { name, description } = req.body;
+    const icon = req?.file?.filename;
     const amenityResponse = await amenityService.createAmenity(name, description, icon);
 
     handleServiceResponse(amenityResponse, res);

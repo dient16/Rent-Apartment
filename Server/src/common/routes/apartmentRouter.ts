@@ -10,7 +10,6 @@ import {
   searchRoomSchema,
 } from '@/api/apartment/apartmentSchema';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
-import upload from '@/common/middleware/uploadFile';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
 import { validateRequest } from '@/common/utils/httpHandlers';
 
@@ -27,7 +26,7 @@ apartmentRegistry.registerPath({
   request: {
     body: {
       content: {
-        'multipart/form-data': {
+        'application/json': {
           schema: apartmentSchema,
         },
       },
@@ -36,7 +35,7 @@ apartmentRegistry.registerPath({
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
-router.post('/', verifyAccessToken, upload.any(), validateRequest(createApartmentSchema), controller.createApartment);
+router.post('/', verifyAccessToken, validateRequest(createApartmentSchema), controller.createApartment);
 
 apartmentRegistry.registerPath({
   method: 'get',

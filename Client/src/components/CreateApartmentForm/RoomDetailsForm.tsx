@@ -1,58 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import InputField from '@/components/Input/InputField';
 import RoomAmenitiesSelector from './RoomAmenitiesSelector';
+import { apiGetServices } from '@/apis';
 
 interface RoomDetailsFormProps {
    index: number;
 }
 
-const amenities = [
-   {
-      label: 'Wi-Fi',
-      value: 'wifi',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'TV',
-      value: 'tv',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'Kitchen',
-      value: 'kitchen',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'Washer',
-      value: 'washer',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'Free Parking on Premises',
-      value: 'free_parking',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'Paid Parking on Premises',
-      value: 'paid_parking',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'Air Conditioning',
-      value: 'air_conditioning',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-   {
-      label: 'Dedicated Workspace',
-      value: 'workspace',
-      imageSrc: 'https://cdn-icons-png.flaticon.com/128/2901/2901643.png',
-   },
-];
-
 const RoomDetailsForm: React.FC<RoomDetailsFormProps> = ({ index }) => {
    const { control } = useFormContext();
-   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+
+   const { data: { data: amenities } = {} } = useQuery({
+      queryKey: ['services'],
+      queryFn: apiGetServices,
+   });
 
    return (
       <div className="mb-6 border-b pb-4">
@@ -96,12 +59,13 @@ const RoomDetailsForm: React.FC<RoomDetailsFormProps> = ({ index }) => {
                defaultValue={[]}
                render={({ field }) => (
                   <RoomAmenitiesSelector
-                     options={amenities}
+                     options={(amenities || []).map((item) => ({
+                        label: item.name,
+                        value: item._id,
+                        imageSrc: item.icon,
+                     }))}
                      selectedValues={field.value}
-                     onChange={(selected) => {
-                        field.onChange(selected);
-                        setSelectedAmenities(selected);
-                     }}
+                     onChange={field.onChange}
                   />
                )}
             />

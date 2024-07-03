@@ -10,7 +10,13 @@ export const handleServiceResponse = (serviceResponse: ServiceResponse<any>, res
 
 export const validateRequest = (schema: ZodSchema) => async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const parsed = await schema.parseAsync({ body: req.body, query: req.query, params: req.params, user: req.user });
+    const parsed = await schema.parseAsync({
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      user: req.user,
+      image: req.file,
+    });
     req.body = parsed.body;
     req.query = parsed.query;
     req.params = parsed.params;

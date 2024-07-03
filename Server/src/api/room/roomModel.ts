@@ -13,7 +13,7 @@ const roomMongooseSchema = new mongoose.Schema(
       ref: 'Apartment',
     },
     roomType: { type: String, required: true },
-    amenityies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity', required: true }],
+    amenities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Amenity', required: true }],
     size: { type: Number, required: true },
     price: { type: Number, required: true },
     images: [{ type: String, required: true }],

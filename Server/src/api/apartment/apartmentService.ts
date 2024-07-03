@@ -176,7 +176,6 @@ export const apartmentService = {
     description: string,
     location: Location,
     rooms: CreateRoom[],
-    roomImagesMap: Record<number, Express.Multer.File[]>,
     houseRules?: string[],
     checkInTime?: string,
     checkOutTime?: string,
@@ -188,20 +187,6 @@ export const apartmentService = {
     session.startTransaction();
 
     try {
-      const roomIds: Types.ObjectId[] = [];
-
-      for (const [index, room] of rooms.entries()) {
-        const roomImages = (roomImagesMap[index] || []).map((file) => ({ filename: file.filename }));
-        const roomResponse = await roomService.addRoomToApartment(createBy, room, roomImages, session);
-
-        if (roomResponse.success) {
-          await session.abortTransaction();
-          return roomResponse;
-        }
-
-        roomIds.push(roomResponse.data!._id);
-      }
-
       const [errApartment, newApartment] = await to(
         ApartmentModel.create(
           [
@@ -210,8 +195,8 @@ export const apartmentService = {
               description,
               location,
               owner: createBy,
-              rooms: roomIds,
-              images: [], // Assuming apartment images are handled separately
+              rooms: [],
+              images: [],
               houseRules,
               checkInTime,
               checkOutTime,
@@ -234,8 +219,36 @@ export const apartmentService = {
         );
       }
 
+      const apartmentId = newApartment[0]._id;
+      const roomIds: Types.ObjectId[] = [];
+
+      for (const room of rooms) {
+        const roomResponse = await roomService.addRoomToApartment(apartmentId, room, session);
+
+        if (!roomResponse.success) {
+          await session.abortTransaction();
+          return roomResponse;
+        }
+
+        roomIds.push(roomResponse.data!._id);
+      }
+
+      const [errUpdateApartment] = await to(
+        ApartmentModel.findByIdAndUpdate(apartmentId, { $set: { rooms: roomIds } }, { new: true, session })
+      );
+
+      if (errUpdateApartment) {
+        await session.abortTransaction();
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Failed to update apartment with room IDs',
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR
+        );
+      }
+
       const [errUpdateUser] = await to(
-        User.findByIdAndUpdate(createBy, { $push: { createApartments: newApartment[0]._id } }, { new: true, session })
+        User.findByIdAndUpdate(createBy, { $push: { createApartments: apartmentId } }, { new: true, session })
       );
 
       if (errUpdateUser) {
@@ -260,7 +273,14 @@ export const apartmentService = {
 
       return new ServiceResponse(ResponseStatus.Success, 'Apartment created successfully', response, StatusCodes.OK);
     } catch (error) {
-      await session.abortTransaction();
+      console.log('createApartment error: %s', error);
+      try {
+        await session.abortTransaction();
+      } catch (abortError) {
+        console.error('Error aborting transaction:', abortError);
+      } finally {
+        session.endSession();
+      }
       return new ServiceResponse(
         ResponseStatus.Failed,
         'Error creating apartment',
@@ -271,7 +291,6 @@ export const apartmentService = {
       session.endSession();
     }
   },
-
   async searchApartments(query: any) {
     const {
       numberOfGuest,

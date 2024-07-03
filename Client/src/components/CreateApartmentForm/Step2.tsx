@@ -3,15 +3,18 @@ import { useFormContext, useFieldArray } from 'react-hook-form';
 import RoomDetailsForm from './RoomDetailsForm';
 import RoomImagesForm from './RoomImagesForm';
 import { Tabs, Button, message } from 'antd';
-
-const { TabPane } = Tabs;
+import type { TabsProps } from 'antd';
 
 interface Step2Props {
-   setShowButtons: (show: boolean) => void;
+   setShowBackButton: React.Dispatch<React.SetStateAction<boolean>>;
+   setShowNextButton: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Step2: React.FC<Step2Props> = ({ setShowButtons }) => {
-   const { control, getValues, trigger, watch } = useFormContext();
+const Step2: React.FC<Step2Props> = ({
+   setShowBackButton,
+   setShowNextButton,
+}) => {
+   const { control, trigger, watch } = useFormContext();
    const { fields, append, remove } = useFieldArray({
       control,
       name: 'rooms',
@@ -28,8 +31,9 @@ const Step2: React.FC<Step2Props> = ({ setShowButtons }) => {
    }, [fields.length]);
 
    useEffect(() => {
-      setShowButtons(subStep === 'addAnother');
-   }, [subStep, setShowButtons]);
+      setShowBackButton(subStep === 'details');
+      setShowNextButton(subStep === 'addAnother');
+   }, [subStep, setShowBackButton, setShowNextButton]);
 
    const addNewRoom = () => {
       append({
@@ -73,6 +77,67 @@ const Step2: React.FC<Step2Props> = ({ setShowButtons }) => {
 
    const roomTypes = watch('rooms');
 
+   const items: TabsProps['items'] = fields.map((_, index) => ({
+      key: String(index),
+      label: (
+         <span
+            className="font-main text-lg px-4 py-2 border bg-sky-100 rounded-full select-none"
+            onClick={() => setSubStep('details')}
+         >
+            {roomTypes?.[index]?.roomType || `Room ${index + 1}`}
+         </span>
+      ),
+      children: (
+         <>
+            {currentRoomIndex === index && (
+               <>
+                  {subStep === 'details' && <RoomDetailsForm index={index} />}
+                  {subStep === 'images' && <RoomImagesForm index={index} />}
+                  {subStep === 'addAnother' && (
+                     <div className="text-center h-full">
+                        <p className="text-xl font-medium text-gray-700 mb-4">
+                           Do you want to add another room?
+                        </p>
+                        <Button
+                           type="primary"
+                           onClick={handleAddAnotherRoom}
+                           className="mr-4 bg-blue-500"
+                        >
+                           Yes
+                        </Button>
+                        <Button onClick={() => setCurrentRoomIndex(null)}>
+                           No
+                        </Button>
+                     </div>
+                  )}
+                  <div className="flex justify-between mt-4">
+                     <Button danger onClick={() => remove(index)}>
+                        Remove Room
+                     </Button>
+                     <div className="flex space-x-4">
+                        {subStep !== 'details' && (
+                           <Button size="large" onClick={handleBackSubStep}>
+                              Back
+                           </Button>
+                        )}
+                        {subStep !== 'addAnother' && (
+                           <Button
+                              type="primary"
+                              onClick={handleNextSubStep}
+                              size="large"
+                              className="bg-blue-500"
+                           >
+                              Next
+                           </Button>
+                        )}
+                     </div>
+                  </div>
+               </>
+            )}
+         </>
+      ),
+   }));
+
    return (
       <div className="p-6">
          <h2 className="text-3xl font-bold mb-6">
@@ -93,73 +158,9 @@ const Step2: React.FC<Step2Props> = ({ setShowButtons }) => {
                   setCurrentRoomIndex(null);
                }
             }}
+            items={items}
             tabBarStyle={{ fontSize: '1.25rem' }}
-         >
-            {fields.map((_item, index) => (
-               <TabPane
-                  tab={
-                     <span className="font-main text-lg px-4 py-2 border bg-sky-100 rounded-full select-none">
-                        {roomTypes?.[index]?.roomType || `Room ${index + 1}`}
-                     </span>
-                  }
-                  key={String(index)}
-                  closable={fields.length > 1}
-               >
-                  {currentRoomIndex === index && (
-                     <>
-                        {subStep === 'details' && (
-                           <RoomDetailsForm index={index} />
-                        )}
-                        {subStep === 'images' && (
-                           <RoomImagesForm index={index} />
-                        )}
-                        {subStep === 'addAnother' && (
-                           <div className="text-center h-full">
-                              <p className="text-xl font-medium text-gray-700 mb-4">
-                                 Do you want to add another room?
-                              </p>
-                              <Button
-                                 type="primary"
-                                 onClick={handleAddAnotherRoom}
-                                 className="mr-4 bg-blue-500"
-                              >
-                                 Yes
-                              </Button>
-                              <Button onClick={() => setCurrentRoomIndex(null)}>
-                                 No
-                              </Button>
-                           </div>
-                        )}
-                        <div className="flex justify-between mt-4">
-                           <Button danger onClick={() => remove(index)}>
-                              Remove Room
-                           </Button>
-                           <div className="flex space-x-4">
-                              {subStep !== 'details' && (
-                                 <Button
-                                    size="large"
-                                    onClick={handleBackSubStep}
-                                 >
-                                    Back
-                                 </Button>
-                              )}
-                              {subStep !== 'addAnother' && (
-                                 <Button
-                                    type="primary"
-                                    onClick={handleNextSubStep}
-                                    size="large"
-                                    className="bg-blue-500"
-                                 >
-                                    Next
-                                 </Button>
-                              )}
-                           </div>
-                        </div>
-                     </>
-                  )}
-               </TabPane>
-            ))}
-         </Tabs>
+         />
       </div>
    );
 };

@@ -8,14 +8,10 @@ import type { CreateRoom, UpdateRoom } from '@/api/room/roomSchema';
 import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 
 export const roomService = {
-  async addRoomToApartment(
-    apartmentId: string,
-    room: CreateRoom,
-    files: Express.Multer.File[],
-    session: mongoose.ClientSession
-  ) {
+  async addRoomToApartment(apartmentId: string, room: CreateRoom, session: mongoose.ClientSession) {
+    // __AUTO_GENERATED_PRINT_VAR_START__
+    console.log('addRoomToApartment room: %s', room); // __AUTO_GENERATED_PRINT_VAR_END__
     try {
-      const roomImages = files.map((file) => file.filename);
       const amenities = room.amenities.map((amenity: any) => new Types.ObjectId(amenity));
 
       const [err, newRoom] = await to(
@@ -24,7 +20,6 @@ export const roomService = {
             {
               ...room,
               amenities,
-              images: roomImages,
               apartmentId: new Types.ObjectId(apartmentId),
             },
           ],
@@ -33,22 +28,10 @@ export const roomService = {
       );
 
       if (err || !newRoom || newRoom.length === 0) {
+        await session.abortTransaction();
         return new ServiceResponse(
           ResponseStatus.Failed,
           'Failed to create room',
-          null,
-          StatusCodes.INTERNAL_SERVER_ERROR
-        );
-      }
-
-      const [errUpdateApartment] = await to(
-        ApartmentModel.findByIdAndUpdate(apartmentId, { $push: { rooms: newRoom[0]._id } }, { new: true, session })
-      );
-
-      if (errUpdateApartment) {
-        return new ServiceResponse(
-          ResponseStatus.Failed,
-          'Failed to update apartment',
           null,
           StatusCodes.INTERNAL_SERVER_ERROR
         );
@@ -61,6 +44,7 @@ export const roomService = {
         StatusCodes.OK
       );
     } catch (error) {
+      await session.abortTransaction();
       return new ServiceResponse(
         ResponseStatus.Failed,
         'Error adding room to apartment',
