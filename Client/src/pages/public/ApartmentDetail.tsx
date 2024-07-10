@@ -7,7 +7,7 @@ import {
 } from '@/components';
 import icons from '@/utils/icons';
 import { Button, DatePicker, Drawer, Image, Result, Spin, Tooltip } from 'antd';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -16,23 +16,6 @@ import dayjs from 'dayjs';
 import moment from 'moment';
 import { path } from '@/utils/constant';
 const { FaLocationDot, MdImage, PiUserThin } = icons;
-const calculateTotalAmount = (
-   numberOfDays: number,
-   roomPrice: number,
-   roomNumber: number,
-) => {
-   const baseAmount: number =
-      (numberOfDays === 0 ? 1 : +numberOfDays) * roomPrice * roomNumber;
-   const taxAmount: number = baseAmount * 0.11;
-   const totalAmount: number = baseAmount + taxAmount;
-
-   return {
-      baseAmount: baseAmount.toLocaleString(),
-      taxAmount: taxAmount.toLocaleString(),
-      totalAmount: totalAmount.toLocaleString(),
-      roomNumber: roomNumber,
-   };
-};
 
 const ApartmentDetail: React.FC = () => {
    const { apartmentId } = useParams();
@@ -42,7 +25,6 @@ const ApartmentDetail: React.FC = () => {
       control,
       handleSubmit,
       formState: { errors, isValid },
-      watch,
    } = useForm();
    const { data: { data: apartment } = {}, isFetching } = useQuery({
       queryKey: ['apartment', apartmentId, searchParams.toString()],
@@ -50,66 +32,31 @@ const ApartmentDetail: React.FC = () => {
       staleTime: 0,
    });
 
-   const [isShowAll, setIsShowAll] = useState(false);
-   const [selectedRoomIndex, setSelectedRoomIndex] = useState<number | null>(
-      null,
-   );
-   const startDate: string | null = searchParams.get('start_date');
-   const endDate: string | null = searchParams.get('end_date');
-   const numberOfGuest: number =
-      +searchParams.get('number_of_guest') !== 0
-         ? +searchParams.get('number_of_guest') ?? 1
-         : 1;
-   const checkIn: Date | null = startDate ? new Date(startDate) : null;
-   const checkOut: Date | null = endDate ? new Date(endDate) : null;
-   const numberOfDays: number =
-      checkIn && checkOut
-         ? Math.ceil(
-              (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
-           )
-         : 1;
-
-   const rooms = apartment?.rooms || [];
-
-   const roomsData =
-      watch('roomsData') ??
-      rooms.map((room) => ({
-         key: room._id,
-         roomType: {
-            roomType: room.roomType,
-            services: room.services.map((service) => service.title),
-         },
-         numberOfGuest: room.numberOfGuest,
-         price: room.price,
-         quantity: room.quantity,
-         roomNumber:
-            searchParams.get('room_id') === room._id
-               ? +searchParams.get('room_number') || 1
-               : 0,
-      }));
-   const selectRoom = roomsData?.find((room) => room.roomNumber > 0);
-   const handleBooking = (data) => {
-      const roomData = data.roomsData.find((room) => room.roomNumber > 0);
-      const queryParams = new URLSearchParams({
-         start_date: dayjs(data.searchDate[0]).format('YYYY-MM-DD'),
-         end_date: dayjs(data.searchDate[1]).format('YYYY-MM-DD'),
-         number_of_guest: numberOfGuest.toString(),
-         room_number: roomData.roomNumber.toString(),
-         room_id: roomData.key.toString(),
-      });
-      navigate(`/${path.BOOKING_CONFIRM}?${queryParams}`);
+   const selectRoom = {
+      price: 500000,
+      roomNumber: 1,
    };
-   const roomImages: string[] = !selectedRoomIndex
-      ? rooms.flatMap((room) => room.images || [])
-      : rooms[selectedRoomIndex].images;
-   const imagesPerColumn = Math.ceil(roomImages.length / 3);
 
-   const { baseAmount, taxAmount, totalAmount, roomNumber } = useMemo(() => {
-      const roomPrice = selectRoom?.price || 0;
-      const roomNumber = selectRoom?.roomNumber || 0;
+   const numberOfGuest = 2;
+   const numberOfDays = 3;
+   const baseAmount = 1500000;
+   const taxAmount = 165000;
+   const totalAmount = 1665000;
 
-      return calculateTotalAmount(numberOfDays, roomPrice, roomNumber);
-   }, [numberOfDays, selectRoom]);
+   const handleBooking = (data) => {
+      // __AUTO_GENERATED_PRINT_VAR_START__
+      console.log('ApartmentDetail#handleBooking data:', data); // __AUTO_GENERATED_PRINT_VAR_END__
+      const queryParams = new URLSearchParams({
+         start_date: '2024-07-10',
+         end_date: '2024-07-13',
+         number_of_guest: '2',
+         room_number: '1',
+         room_id: 'room1',
+      });
+
+      // navigate(`/${path.BOOKING_CONFIRM}?${queryParams}`);
+   };
+
    return isFetching ? (
       <div className="min-h-screen">
          <Spin spinning={isFetching} fullscreen={isFetching} />
@@ -141,103 +88,47 @@ const ApartmentDetail: React.FC = () => {
             <div className="grid overflow-hidden relative grid-cols-4 grid-rows-4 gap-3 mt-10 w-full max-h-[400px] lg:min-h-[300px]">
                <div className="col-span-2 row-span-4">
                   <div className="overflow-hidden w-full h-full rounded-2xl">
-                     <Image src={rooms[0]?.images[0]} />
+                     <Image
+                        src={apartment.rooms[0]?.images[0]}
+                        width="100%"
+                        height="100%"
+                     />
                   </div>
                </div>
                <div className="flex col-span-2 row-span-2 gap-3">
                   <div className="overflow-hidden w-1/2 h-full rounded-2xl">
-                     <Image src={rooms[0]?.images[1]} />
+                     <Image
+                        src={apartment.rooms[0]?.images[1]}
+                        width="100%"
+                        height="100%"
+                     />
                   </div>
                   <div className="overflow-hidden w-1/2 h-full rounded-2xl">
-                     <Image src={rooms[0]?.images[2]} />
+                     <Image
+                        src={apartment.rooms[0]?.images[2]}
+                        width="100%"
+                        height="100%"
+                     />
                   </div>
                </div>
                <div className="flex col-span-2 row-span-2 gap-3">
                   <div className="overflow-hidden w-1/2 h-full rounded-2xl">
-                     <Image src={rooms[0]?.images[3]} />
+                     <Image
+                        src={apartment.rooms[0]?.images[3]}
+                        width="100%"
+                        height="100%"
+                     />
                   </div>
                   <div className="overflow-hidden w-1/2 h-full rounded-2xl">
-                     <Image src={rooms[0]?.images[4]} />
+                     <Image
+                        src={apartment.rooms[0]?.images[4]}
+                        width="100%"
+                        height="100%"
+                     />
                   </div>
                </div>
-               <Drawer
-                  placement="bottom"
-                  onClose={() => setIsShowAll(false)}
-                  open={isShowAll}
-                  height="100%"
-               >
-                  <div className="flex flex-col justify-center">
-                     <div className="flex gap-3 items-start">
-                        <div className="flex flex-col w-[100px]">
-                           <div
-                              className="w-[100px] h-[70px]"
-                              onClick={() => {
-                                 setIsShowAll(true);
-                                 setSelectedRoomIndex(null);
-                              }}
-                           >
-                              <Image
-                                 width="100%"
-                                 height="100%"
-                                 className="rounded-lg border cursor-pointer hover:border-blue-500"
-                                 preview={false}
-                                 src={rooms[0].images[1]}
-                              />
-                           </div>
-                           <span className="font-medium text-md">Overview</span>
-                        </div>
-                        {rooms.map((room, index: number) => (
-                           <div
-                              onClick={() => {
-                                 setIsShowAll(true);
-                                 setSelectedRoomIndex(index);
-                              }}
-                              key={index}
-                              className="flex flex-col w-[100px]"
-                           >
-                              <div className="flex flex-col w-[100px] h-[70px]">
-                                 <Image
-                                    width="100%"
-                                    height="100%"
-                                    className={`rounded-lg border hover:border-blue-500 cursor-pointer ${
-                                       selectedRoomIndex === index &&
-                                       'selected-room'
-                                    }`}
-                                    preview={false}
-                                    src={room.images[0]}
-                                 />
-                              </div>
-                              <span className="font-medium text-md">
-                                 {room.roomType}
-                              </span>
-                           </div>
-                        ))}
-                     </div>
-
-                     <div className="grid overflow-auto grid-cols-3 gap-3 list-image-room max-h-[80vh]">
-                        {Array.from({ length: 3 }, (_, columnIndex) => (
-                           <div className="col-span-1" key={columnIndex}>
-                              {roomImages
-                                 .slice(
-                                    columnIndex * imagesPerColumn,
-                                    (columnIndex + 1) * imagesPerColumn,
-                                 )
-                                 .map((image, imageIndex) => (
-                                    <Image
-                                       width="100%"
-                                       src={image}
-                                       key={imageIndex}
-                                    />
-                                 ))}
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-               </Drawer>
-
                <Button
                   className="flex absolute right-3 bottom-3 gap-2 items-center bg-white border border-black"
-                  onClick={() => setIsShowAll(true)}
                   size="middle"
                >
                   <MdImage size={18} />
@@ -261,9 +152,9 @@ const ApartmentDetail: React.FC = () => {
                         This place has something for you
                      </h3>
                      <div className="grid grid-cols-4 gap-3 mt-5 font-light">
-                        {(rooms[0]?.services || []).map(
+                        {apartment.rooms[0]?.amenities.map(
                            (
-                              service: { title: string; image: string },
+                              amenity: { name: string; icon: string },
                               index: number,
                            ) => (
                               <div
@@ -273,24 +164,35 @@ const ApartmentDetail: React.FC = () => {
                                  <Image
                                     height={24}
                                     preview={false}
-                                    src={service.image}
+                                    src={amenity.icon}
                                  />
-                                 <span>{service.title}</span>
+                                 <span>{amenity.name}</span>
                               </div>
                            ),
                         )}
                      </div>
                   </div>
-
                   <div className="mt-7">
                      <div className="text-sm font-light whitespace-pre-line">
-                        {rooms[0].description}
+                        {apartment.description}
                      </div>
                   </div>
                   <h3 id="rooms" className="my-5 text-xl font-normal">
                      Rooms
                   </h3>
-                  <RoomList />
+                  <Controller
+                     name="selectedRooms"
+                     control={control}
+                     defaultValue={[]}
+                     rules={{ required: 'Please select room' }}
+                     render={({ field }) => (
+                        <RoomList
+                           roomList={apartment.rooms}
+                           value={field.value}
+                           onChange={field.onChange}
+                        />
+                     )}
+                  />
                </div>
                <div className="sticky p-6 mt-5 rounded-lg shadow min-w-[350px] shadow-gray-400 top-[140px]">
                   <div className="flex flex-col gap-3 justify-center items-center w-full">
@@ -307,11 +209,10 @@ const ApartmentDetail: React.FC = () => {
                            rules={{
                               required: 'Please select the time',
                            }}
-                           defaultValue={
-                              startDate && endDate
-                                 ? [dayjs(startDate), dayjs(endDate)]
-                                 : undefined
-                           }
+                           defaultValue={[
+                              dayjs('2024-07-10'),
+                              dayjs('2024-07-13'),
+                           ]}
                            render={({ field }) => (
                               <Tooltip
                                  title={errors?.searchDate?.message as string}
@@ -328,23 +229,7 @@ const ApartmentDetail: React.FC = () => {
                                     placeholder={['Check in', 'Check out']}
                                     popupClassName="show-card-md rounded-full"
                                     {...field}
-                                    onChange={(dates) => {
-                                       const currentParams = Object.fromEntries(
-                                          searchParams.entries(),
-                                       );
-                                       if (dates) {
-                                          const newParams = {
-                                             ...currentParams,
-                                             start_date:
-                                                dates[0]?.format('YYYY-MM-DD'),
-                                             end_date:
-                                                dates[1]?.format('YYYY-MM-DD'),
-                                          };
-                                          setSearchParams(newParams);
-                                       }
-
-                                       field.onChange(dates);
-                                    }}
+                                    onChange={(dates) => field.onChange(dates)}
                                     disabledDate={(current) =>
                                        current &&
                                        current < moment().startOf('day')
@@ -353,12 +238,9 @@ const ApartmentDetail: React.FC = () => {
                               </Tooltip>
                            )}
                         />
-
                         <div className="flex gap-1 justify-center items-center w-full font-normal bg-white rounded-t-none rounded-b-lg border border-t-0 border-gray-300 cursor-default select-none font-main h-[48px] border-700">
                            <PiUserThin size={25} />
-                           <span className="">{`${numberOfGuest} adult · ${
-                              selectRoom?.roomNumber || 0
-                           } rooms`}</span>
+                           <span className="">{`${numberOfGuest} adult · ${selectRoom?.roomNumber || 0} rooms`}</span>
                         </div>
                         <Button
                            className="mt-3 bg-blue-500 rounded-xl h-[48px] font-main text-md"
@@ -375,14 +257,14 @@ const ApartmentDetail: React.FC = () => {
                               <span>
                                  {(selectRoom?.price || 0).toLocaleString()} VND
                               </span>
-                              <span>{` x ${numberOfDays === 0 ? 1 : +numberOfDays} night`}</span>
+                              <span>{` x ${numberOfDays === 0 ? 1 : numberOfDays} night`}</span>
                            </span>
                            <span>{baseAmount} VND</span>
                         </div>
                         <div className="flex justify-between items-center mt-1 w-full font-light">
                            <span>
                               <span>{baseAmount} VND</span>
-                              <span>{` x ${roomNumber} rooms`}</span>
+                              <span>{` x ${selectRoom?.roomNumber || 1} rooms`}</span>
                            </span>
                            <span>{baseAmount} VND</span>
                         </div>
@@ -406,8 +288,8 @@ const ApartmentDetail: React.FC = () => {
                </h3>
                <Map
                   selectPosition={{
-                     lat: apartment?.location.longitude,
-                     lon: apartment?.location.latitude,
+                     lat: apartment?.location.lat,
+                     lon: apartment?.location.long,
                   }}
                />
             </div>

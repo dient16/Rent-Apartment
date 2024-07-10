@@ -1,28 +1,28 @@
-import { Button } from 'antd';
+import { Checkbox } from 'antd';
 import { FaBed, FaShower, FaSmokingBan, FaUsers } from 'react-icons/fa';
 
-interface RoomOption {
-   roomType: string;
-   breakfastIncluded: boolean;
-   cancellationPolicy: string;
-   paymentOption: string;
-   bedType: string;
-   price: number;
-   discount: number;
-   totalPrice: number;
-   availableRooms: number;
+interface RoomSelectionProps {
+   roomOption: RoomOption;
+   onChange: (selectedRoomId: string, checked: boolean) => void;
+   isChecked: boolean;
 }
 
-const RoomSelection: React.FC<{ roomOption: RoomOption }> = ({
+const RoomSelection: React.FC<RoomSelectionProps> = ({
    roomOption,
+   onChange,
+   isChecked,
 }) => {
+   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(roomOption._id, e.target.checked);
+   };
+
    return (
       <div className="p-4 mb-4 bg-white rounded-2xl border shadow-lg">
          <div className="flex gap-5 mb-4">
             <div className="w-1/3 bg-white">
                <img
                   alt="room"
-                  src="https://via.placeholder.com/300"
+                  src={roomOption.images[0]}
                   className="w-full rounded-lg h-[200px]"
                />
                <div className="flex flex-col gap-2 p-4">
@@ -32,7 +32,7 @@ const RoomSelection: React.FC<{ roomOption: RoomOption }> = ({
                   <div className="flex flex-wrap gap-3">
                      <div className="flex gap-3 items-center">
                         <FaBed />
-                        <span>17.0 m²</span>
+                        <span>{roomOption.size} m²</span>
                      </div>
                      <div className="flex gap-3 items-center">
                         <FaSmokingBan />
@@ -59,6 +59,9 @@ const RoomSelection: React.FC<{ roomOption: RoomOption }> = ({
                         <th className="py-2 px-4 text-lg font-semibold text-left border-r border-b border-gray-200">
                            Price/night
                         </th>
+                        <th className="py-2 px-4 text-lg font-semibold text-left border-b border-gray-200">
+                           Select
+                        </th>
                      </tr>
                   </thead>
                   <tbody>
@@ -68,42 +71,23 @@ const RoomSelection: React.FC<{ roomOption: RoomOption }> = ({
                               <h5 className="font-medium">
                                  {roomOption.roomType}
                               </h5>
-                              <p>
-                                 {roomOption.breakfastIncluded
-                                    ? 'Breakfast included'
-                                    : 'No breakfast included'}
-                              </p>
-                              <p>{roomOption.cancellationPolicy}</p>
-                              {roomOption.paymentOption && (
-                                 <p className="text-blue-600">
-                                    {roomOption.paymentOption}
-                                 </p>
-                              )}
-                              <p>{roomOption.bedType}</p>
+                              <p>No breakfast included</p>
+                              <p>Free cancellation before 23 Jun 2024, 12:59</p>
+                              <p className="text-blue-600">Pay at Hotel</p>
+                              <p>1 Double Bed</p>
                            </div>
                         </td>
                         <td className="py-2 px-4 border-r border-gray-200">
                            <div className="flex items-center">
                               <FaUsers />
-                              <span className="ml-2">2</span>
+                              <span className="ml-2">
+                                 {roomOption.numberOfGuest}
+                              </span>
                            </div>
                         </td>
                         <td className="py-2 px-4 border-r border-gray-200">
                            <div className="flex flex-col items-center">
-                              {roomOption.discount > 0 && (
-                                 <span className="text-red-500">
-                                    Save {roomOption.discount * 100}%
-                                 </span>
-                              )}
-                              <p
-                                 className={
-                                    roomOption.discount > 0
-                                       ? 'line-through'
-                                       : ''
-                                 }
-                              >
-                                 {roomOption.price.toLocaleString()} VND
-                              </p>
+                              <p>{roomOption.price.toLocaleString()} VND</p>
                               <p className="text-lg font-bold">
                                  {roomOption.totalPrice.toLocaleString()} VND
                               </p>
@@ -113,17 +97,13 @@ const RoomSelection: React.FC<{ roomOption: RoomOption }> = ({
                            </div>
                         </td>
                         <td className="py-2 px-4">
-                           <div className="flex flex-col justify-center items-center">
-                              <Button
-                                 type="primary"
-                                 className="bg-blue-500 font-main"
-                              >
-                                 Select
-                              </Button>
-                              <p className="text-red-500">
-                                 Only {roomOption.availableRooms} rooms left
-                              </p>
-                           </div>
+                           <Checkbox
+                              checked={isChecked}
+                              onChange={handleCheckboxChange}
+                           />
+                           <p className="text-red-500">
+                              Only {roomOption.quantity} rooms left
+                           </p>
                         </td>
                      </tr>
                   </tbody>

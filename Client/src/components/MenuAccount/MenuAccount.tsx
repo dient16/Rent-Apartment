@@ -7,13 +7,8 @@ import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 
 const MenuAccount: FC = () => {
-   const {
-      AiOutlineUser,
-      LiaSignOutAltSolid,
-      BsHouses,
-      TbBrandBooking,
-      IoCreateOutline,
-   } = icons;
+   const { AiOutlineUser, LiaSignOutAltSolid, BsHouses, TbBrandBooking } =
+      icons;
    const { dispatch } = useAuth();
 
    return (
@@ -29,21 +24,12 @@ const MenuAccount: FC = () => {
                </Link>
             </Flex>
             <Flex align="center" gap={10}>
-               <IoCreateOutline size={20} />
-               <Link
-                  className="p-0 m-0 w-full text-base text-left font-main"
-                  to={`/${path.CREATE_APARTMENT}`}
-               >
-                  Create Apartment
-               </Link>
-            </Flex>
-            <Flex align="center" gap={10}>
                <BsHouses size={20} />
                <Link
                   className="p-0 m-0 w-full text-base text-left font-main"
-                  to={`/${path.ACCOUNT_SETTINGS}/${path.MANAGE_APARTMENT}`}
+                  to={`${path.HOST_ROOT}${path.HOST_DASHBOARD}`}
                >
-                  Manage Apartment
+                  Manage Rental House
                </Link>
             </Flex>
             <Flex align="center" gap={10}>

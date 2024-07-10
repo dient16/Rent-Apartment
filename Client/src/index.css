@@ -74,6 +74,3 @@
    width: 350px !important;
    height: 320px !important;
 }
-.ant-upload-list-item-image {
-   object-fit: cover !important;
-}

@@ -47,14 +47,14 @@ const Listing: React.FC = () => {
    });
    const roomNumber: number =
       +searchParams.get('room') !== 0
-         ? +searchParams.get('room_number') ?? 1
+         ? +searchParams.get('roomNumber') ?? 1
          : 1;
    const numberOfGuest: number =
-      +searchParams.get('number_of_guest') !== 0
-         ? +searchParams.get('number_of_guest') ?? 1
+      +searchParams.get('numberOfGuest') !== 0
+         ? +searchParams.get('numberOfGuest') ?? 1
          : 1;
-   const startDate: string | null = searchParams.get('start_date');
-   const endDate: string | null = searchParams.get('end_date');
+   const startDate: string | null = searchParams.get('startDate');
+   const endDate: string | null = searchParams.get('endDate');
    const checkIn: Date | null = startDate ? new Date(startDate) : null;
    const checkOut: Date | null = endDate ? new Date(endDate) : null;
    const numberOfDays: number =
@@ -76,8 +76,8 @@ const Listing: React.FC = () => {
          data.searchPrice[0] !== undefined &&
          data.searchPrice[1] !== undefined
       ) {
-         queryParams.set('min_price', data.searchPrice[0].toString());
-         queryParams.set('max_price', data.searchPrice[1].toString());
+         queryParams.set('minPrice', data.searchPrice[0].toString());
+         queryParams.set('maxPrice', data.searchPrice[1].toString());
       }
       setSearchParams(queryParams);
    };
@@ -305,14 +305,13 @@ const Listing: React.FC = () => {
                                        const queryParams = new URLSearchParams({
                                           province:
                                              searchParams.get('province'),
-                                          start_date:
-                                             searchParams.get('start_date'),
-                                          end_date:
-                                             searchParams.get('end_date'),
-                                          number_of_guest:
+                                          startDate:
+                                             searchParams.get('startDate'),
+                                          endDate: searchParams.get('endDate'),
+                                          numberOfGuest:
                                              numberOfGuest.toString(),
-                                          room_number: roomNumber.toString(),
-                                          room_id: room.roomId,
+                                          roomNumber: roomNumber.toString(),
+                                          roomId: room.roomId,
                                        });
                                        navigate(
                                           `/apartment/${room._id}?${queryParams.toString()}`,

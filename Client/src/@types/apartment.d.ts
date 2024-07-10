@@ -46,3 +46,15 @@ interface SearchData {
    room: number;
    searchPrice?: number;
 }
+
+interface RoomOption {
+   _id: string;
+   roomType: string;
+   amenities: { name: string; icon: string }[];
+   size: number;
+   price: number;
+   images: string[];
+   numberOfGuest: number;
+   quantity: number;
+   totalPrice: number;
+}

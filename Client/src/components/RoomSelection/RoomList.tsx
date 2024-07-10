@@ -1,47 +1,40 @@
+import { useState } from 'react';
 import RoomSelection from './RoomSelection';
 
-interface RoomOption {
-   roomType: string;
-   breakfastIncluded: boolean;
-   cancellationPolicy: string;
-   paymentOption: string;
-   bedType: string;
-   price: number;
-   discount: number;
-   totalPrice: number;
-   availableRooms: number;
+interface RoomsListProps {
+   roomList: RoomOption[];
+   onChange: (selectedRooms: RoomOption[]) => void;
+   value: RoomOption[];
 }
 
-const roomOptions: RoomOption[] = [
-   {
-      roomType: 'Superior Double Room',
-      breakfastIncluded: false,
-      cancellationPolicy: 'Free cancellation before 23 Jun 2024, 12:59',
-      paymentOption: 'Pay at Hotel',
-      bedType: '1 Double Bed',
-      price: 518400,
-      discount: 0.31,
-      totalPrice: 357696,
-      availableRooms: 3,
-   },
-   {
-      roomType: 'Deluxe Twin Room',
-      breakfastIncluded: true,
-      cancellationPolicy: 'Free cancellation before 23 Jun 2024, 12:59',
-      paymentOption: 'Pay at Hotel',
-      bedType: '2 Single Beds',
-      price: 618400,
-      discount: 0.2,
-      totalPrice: 494720,
-      availableRooms: 5,
-   },
-];
+const RoomsList: React.FC<RoomsListProps> = ({ roomList, onChange, value }) => {
+   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>(
+      value.map((room) => room._id),
+   );
 
-const RoomsList: React.FC = () => {
+   const handleRoomSelection = (roomId: string, isChecked: boolean) => {
+      let updatedSelectedRooms: RoomOption[];
+      if (isChecked) {
+         updatedSelectedRooms = [
+            ...value,
+            roomList.find((room) => room._id === roomId)!,
+         ];
+      } else {
+         updatedSelectedRooms = value.filter((room) => room._id !== roomId);
+      }
+      setSelectedRoomIds(updatedSelectedRooms.map((room) => room._id));
+      onChange(updatedSelectedRooms);
+   };
+
    return (
       <div className="space-y-4">
-         {roomOptions.map((roomOption) => (
-            <RoomSelection key={roomOption.roomType} roomOption={roomOption} />
+         {roomList.map((room) => (
+            <RoomSelection
+               key={room._id}
+               roomOption={room}
+               onChange={handleRoomSelection}
+               isChecked={selectedRoomIds.includes(room._id)}
+            />
          ))}
       </div>
    );

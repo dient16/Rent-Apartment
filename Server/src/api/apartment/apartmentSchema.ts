@@ -26,13 +26,14 @@ export const apartmentSchema = z.object({
 });
 
 export const getApartmentQuerySchema = z.object({
+  params: z.object({ apartmentId: z.string() }),
   query: z.object({
-    startDate: stringToDate(z.date()).optional(),
-    endDate: stringToDate(z.date()).optional(),
-    numberOfGuest: stringToNumber(z.number()).optional().default(1),
-    roomNumber: stringToNumber(z.number()).optional().default(1),
-    minPrice: stringToFloat(z.number()).optional().default(0),
-    maxPrice: stringToFloat(z.number()).optional().default(Number.MAX_VALUE),
+    startDate: stringToDate(z.date()),
+    endDate: stringToDate(z.date()),
+    numberOfGuest: stringToNumber(z.number()).default(1),
+    roomNumber: stringToNumber(z.number()).default(1),
+    minPrice: stringToFloat(z.number()).default(0),
+    maxPrice: stringToFloat(z.number()).default(Number.MAX_VALUE),
   }),
 });
 
@@ -84,5 +85,5 @@ export type Apartment = z.infer<typeof apartmentSchema>;
 export type SearchRoomType = z.infer<typeof searchRoomSchema>;
 export type CreateApartmentType = z.infer<typeof createApartmentSchema>;
 export type Location = z.infer<typeof locationSchema>;
-export type getApartmentQuery = z.infer<typeof getApartmentQuerySchema>;
+export type GetApartmentQuery = z.infer<typeof getApartmentQuerySchema>;
 export type CreateRoom = z.infer<typeof roomSchema>;
