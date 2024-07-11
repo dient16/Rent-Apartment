@@ -1,28 +1,22 @@
-import { useState } from 'react';
 import RoomSelection from './RoomSelection';
 
 interface RoomsListProps {
    roomList: RoomOption[];
-   onChange: (selectedRooms: RoomOption[]) => void;
-   value: RoomOption[];
+   onChange: (selectedRooms: { roomId: string; count: number }[]) => void;
+   value: { roomId: string; count: number }[];
 }
 
 const RoomsList: React.FC<RoomsListProps> = ({ roomList, onChange, value }) => {
-   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>(
-      value.map((room) => room._id),
-   );
-
-   const handleRoomSelection = (roomId: string, isChecked: boolean) => {
-      let updatedSelectedRooms: RoomOption[];
-      if (isChecked) {
-         updatedSelectedRooms = [
-            ...value,
-            roomList.find((room) => room._id === roomId)!,
-         ];
-      } else {
-         updatedSelectedRooms = value.filter((room) => room._id !== roomId);
+   const handleRoomSelection = (selectedRoom: {
+      roomId: string;
+      count: number;
+   }) => {
+      const updatedSelectedRooms = value.filter(
+         (room) => room.roomId !== selectedRoom.roomId,
+      );
+      if (selectedRoom.count > 0) {
+         updatedSelectedRooms.push(selectedRoom);
       }
-      setSelectedRoomIds(updatedSelectedRooms.map((room) => room._id));
       onChange(updatedSelectedRooms);
    };
 
@@ -33,7 +27,9 @@ const RoomsList: React.FC<RoomsListProps> = ({ roomList, onChange, value }) => {
                key={room._id}
                roomOption={room}
                onChange={handleRoomSelection}
-               isChecked={selectedRoomIds.includes(room._id)}
+               selectedCount={
+                  value.find((r) => r.roomId === room._id)?.count || 0
+               }
             />
          ))}
       </div>

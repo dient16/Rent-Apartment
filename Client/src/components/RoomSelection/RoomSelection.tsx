@@ -1,19 +1,38 @@
-import { Checkbox } from 'antd';
+import { useState, useEffect } from 'react';
 import { FaBed, FaShower, FaSmokingBan, FaUsers } from 'react-icons/fa';
 
 interface RoomSelectionProps {
    roomOption: RoomOption;
-   onChange: (selectedRoomId: string, checked: boolean) => void;
-   isChecked: boolean;
+   onChange: (selectedRoom: { roomId: string; count: number }) => void;
+   selectedCount: number;
 }
 
 const RoomSelection: React.FC<RoomSelectionProps> = ({
    roomOption,
    onChange,
-   isChecked,
+   selectedCount,
 }) => {
-   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange(roomOption._id, e.target.checked);
+   const [count, setCount] = useState<number>(selectedCount);
+
+   useEffect(() => {
+      setCount(selectedCount);
+   }, [selectedCount]);
+
+   const handleCountChange = (value: number) => {
+      setCount(value);
+      onChange({ roomId: roomOption._id, count: value });
+   };
+
+   const increment = () => {
+      if (count < roomOption.quantity) {
+         handleCountChange(count + 1);
+      }
+   };
+
+   const decrement = () => {
+      if (count > 0) {
+         handleCountChange(count - 1);
+      }
    };
 
    return (
@@ -60,7 +79,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                            Price/night
                         </th>
                         <th className="py-2 px-4 text-lg font-semibold text-left border-b border-gray-200">
-                           Select
+                           Quantity
                         </th>
                      </tr>
                   </thead>
@@ -71,9 +90,11 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                               <h5 className="font-medium">
                                  {roomOption.roomType}
                               </h5>
-                              <p>No breakfast included</p>
-                              <p>Free cancellation before 23 Jun 2024, 12:59</p>
-                              <p className="text-blue-600">Pay at Hotel</p>
+                              <p>Breakfast not included</p>
+                              <p>
+                                 Free cancellation before June 23, 2024, 12:59
+                              </p>
+                              <p className="text-blue-600">Pay at the hotel</p>
                               <p>1 Double Bed</p>
                            </div>
                         </td>
@@ -97,10 +118,70 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                            </div>
                         </td>
                         <td className="py-2 px-4">
-                           <Checkbox
-                              checked={isChecked}
-                              onChange={handleCheckboxChange}
-                           />
+                           <div className="py-2 px-3 bg-white border border-gray-200 rounded-lg">
+                              <div className="w-full flex justify-between items-center gap-x-3">
+                                 <div className="flex justify-end items-center gap-x-1.5">
+                                    <button
+                                       type="button"
+                                       className={`size-8 inline-flex justify-center items-center gap-x-2 text-base font-medium rounded-full border bg-white text-gray-800 shadow-sm hover:bg-gray-50 ${
+                                          count === 0
+                                             ? 'opacity-50 cursor-not-allowed'
+                                             : ''
+                                       }`}
+                                       onClick={decrement}
+                                       disabled={count === 0}
+                                    >
+                                       <svg
+                                          className="flex-shrink-0 size-5"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="28"
+                                          height="28"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                       >
+                                          <path d="M5 12h14"></path>
+                                       </svg>
+                                    </button>
+                                    <input
+                                       type="text"
+                                       className="w-12 text-xl text-center border-t border-b outline-none"
+                                       value={count}
+                                       readOnly
+                                    />
+                                    <button
+                                       type="button"
+                                       className={`size-8 inline-flex justify-center items-center gap-x-2 text-base font-medium rounded-full border bg-white text-gray-800 shadow-sm hover:bg-gray-50 ${
+                                          count === roomOption.quantity
+                                             ? 'opacity-50 cursor-not-allowed'
+                                             : ''
+                                       }`}
+                                       onClick={increment}
+                                       disabled={count === roomOption.quantity}
+                                    >
+                                       <svg
+                                          className="flex-shrink-0 size-5"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="28"
+                                          height="28"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                       >
+                                          <path d="M5 12h14"></path>
+                                          <path d="M12 5v14"></path>
+                                       </svg>
+                                    </button>
+                                 </div>
+                              </div>
+                           </div>
+
                            <p className="text-red-500">
                               Only {roomOption.quantity} rooms left
                            </p>

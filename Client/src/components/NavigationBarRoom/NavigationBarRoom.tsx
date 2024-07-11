@@ -11,7 +11,7 @@ const tabs = [
    { name: 'Reviews', key: 'reviews' },
 ];
 
-const NavigationBarRoom: React.FC = () => {
+const NavigationBarRoom: FC = () => {
    const [activeTab, setActiveTab] = useState<string>('overview');
 
    useEffect(() => {
@@ -36,12 +36,16 @@ const NavigationBarRoom: React.FC = () => {
       };
    }, [activeTab]);
 
-   const handleTabClick = (key: string) => {
+   const handleTabClick = (
+      key: string,
+      e: React.MouseEvent<HTMLButtonElement>,
+   ) => {
+      e.preventDefault();
       setActiveTab(key);
       const element = document.getElementById(key);
       if (element) {
          window.scrollTo({
-            top: element.offsetTop - 70,
+            top: element.offsetTop - 100,
             behavior: 'smooth',
          });
       }
@@ -53,7 +57,7 @@ const NavigationBarRoom: React.FC = () => {
             {tabs.map((tab) => (
                <button
                   key={tab.key}
-                  onClick={() => handleTabClick(tab.key)}
+                  onClick={(e) => handleTabClick(tab.key, e)}
                   className={clsx(
                      'py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 cursor-pointer',
                      activeTab === tab.key

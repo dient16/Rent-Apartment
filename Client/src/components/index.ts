@@ -15,3 +15,6 @@ export { default as RoomSelection } from './RoomSelection/RoomSelection';
 export { default as RoomList } from './RoomSelection/RoomList';
 export { default as NavigationBarRoom } from './NavigationBarRoom/NavigationBarRoom';
 export { default as RoomPolices } from './RoomPolices/RoomPolices';
+export { default as ImageGallery } from './ImageGallery/ImageGallery';
+export { default as BookingSummary } from './BookingSummary/BookingSummary';
+export { default as SearchInfoBar } from './SearchInfoBar/SearchInfoBar';
