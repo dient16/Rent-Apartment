@@ -3,7 +3,11 @@ import { FaBed, FaShower, FaSmokingBan, FaUsers } from 'react-icons/fa';
 
 interface RoomSelectionProps {
    roomOption: RoomOption;
-   onChange: (selectedRoom: { roomId: string; count: number }) => void;
+   onChange: (selectedRoom: {
+      roomId: string;
+      roomType: string;
+      count: number;
+   }) => void;
    selectedCount: number;
 }
 
@@ -20,7 +24,11 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
 
    const handleCountChange = (value: number) => {
       setCount(value);
-      onChange({ roomId: roomOption._id, count: value });
+      onChange({
+         roomId: roomOption._id,
+         roomType: roomOption.roomType,
+         count: value,
+      });
    };
 
    const increment = () => {
@@ -37,8 +45,8 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
 
    return (
       <div className="p-4 mb-4 bg-white rounded-2xl border shadow-lg">
-         <div className="flex gap-5 mb-4">
-            <div className="w-1/3 bg-white">
+         <div className="flex flex-col lg:flex-row gap-5 mb-4">
+            <div className="w-full lg:w-1/3 bg-white">
                <img
                   alt="room"
                   src={roomOption.images[0]}
@@ -65,7 +73,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                   <div className="text-blue-600">View room details</div>
                </div>
             </div>
-            <div className="w-2/3">
+            <div className="w-full lg:w-2/3">
                <table className="min-w-full bg-white border border-gray-200">
                   <thead className="bg-gray-100">
                      <tr>
@@ -181,7 +189,6 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                                  </div>
                               </div>
                            </div>
-
                            <p className="text-red-500">
                               Only {roomOption.quantity} rooms left
                            </p>

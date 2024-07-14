@@ -6,6 +6,7 @@ export const path: { [key: string]: string } = {
    HOME: '',
    ALL: '/*',
    LISTING: 'listing',
+   ABOUT: 'about',
    APARTMENT_DETAIL: 'apartment/:apartmentId',
    FAVORITES: 'favorites',
    CONTACT: 'contact',
@@ -42,6 +43,6 @@ export const navigates: {
    icon: React.ReactNode;
 }[] = [
    { title: 'Home', path: path.HOME, icon: <RiHome4Line /> },
-   { title: 'My favorites', path: path.FAVORITES, icon: <GrFavorite /> },
    { title: 'Contact', path: path.CONTACT, icon: <RiContactsFill /> },
+   { title: 'About', path: path.ABOUT, icon: <GrFavorite /> },
 ];

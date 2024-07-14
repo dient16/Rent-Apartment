@@ -3,7 +3,7 @@ import RoomSelection from './RoomSelection';
 interface RoomsListProps {
    roomList: RoomOption[];
    onChange: (selectedRooms: { roomId: string; count: number }[]) => void;
-   value: { roomId: string; count: number }[];
+   value: { roomId: string; roomType: string; count: number }[];
 }
 
 const RoomsList: React.FC<RoomsListProps> = ({ roomList, onChange, value }) => {

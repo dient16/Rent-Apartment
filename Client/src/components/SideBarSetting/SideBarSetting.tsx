@@ -28,18 +28,6 @@ const SideBarSetting: React.FC = () => {
             <span>Personal Information</span>
          </NavLink>
          <NavLink
-            to={`/${path.ACCOUNT_SETTINGS}/${path.MANAGE_APARTMENT}`}
-            className={({ isActive }) =>
-               clsx(
-                  'w-full py-1 px-4 font-normal text-lg flex items-center gap-3',
-                  isActive ? ' text-blue-600' : 'text-gray-700 ',
-               )
-            }
-         >
-            <BsHouses size={20} />
-            <span>Manage Apartment</span>
-         </NavLink>
-         <NavLink
             to={`/${path.ACCOUNT_SETTINGS}/payment`}
             className={({ isActive }) =>
                clsx(

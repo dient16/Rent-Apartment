@@ -18,3 +18,6 @@ export { default as RoomPolices } from './RoomPolices/RoomPolices';
 export { default as ImageGallery } from './ImageGallery/ImageGallery';
 export { default as BookingSummary } from './BookingSummary/BookingSummary';
 export { default as SearchInfoBar } from './SearchInfoBar/SearchInfoBar';
+export { default as Results } from './SearchResult/Result';
+export { default as SearchSection } from './SearchResult/SearchSection';
+export { default as FilterSection } from './SearchResult/FilterSection';

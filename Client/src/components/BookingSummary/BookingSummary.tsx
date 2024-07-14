@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button, Tooltip, Drawer, DatePicker } from 'antd';
 import { Controller, useFormContext } from 'react-hook-form';
 import { PiUserThin } from 'react-icons/pi';
@@ -12,7 +12,6 @@ interface RoomValue {
 
 interface BookingSummaryProps {
    apartment: Apartment & { rooms: RoomOption[] };
-   selectedRooms: RoomValue[];
    numberOfGuest: number;
    startDate: string;
    endDate: string;
@@ -21,7 +20,6 @@ interface BookingSummaryProps {
 
 const BookingSummary: React.FC<BookingSummaryProps> = ({
    apartment,
-   selectedRooms,
    numberOfGuest,
    startDate,
    endDate,
@@ -29,11 +27,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
 }) => {
    const {
       control,
+      watch,
       formState: { isValid },
    } = useFormContext();
    const [drawerVisible, setDrawerVisible] = useState(false);
-
-   const calculateTotalAmount = () => {
+   const selectedRooms: RoomValue[] = watch('selectedRooms', []);
+   const totalAmountPerNight = useMemo(() => {
       let total = 0;
       selectedRooms.forEach((selectedRoom: RoomValue) => {
          const room = apartment?.rooms.find(
@@ -44,15 +43,22 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
          }
       });
       return total;
-   };
+   }, [selectedRooms, apartment]);
 
-   const totalAmountPerNight = calculateTotalAmount();
-   const totalAmount =
-      totalAmountPerNight *
-      numberOfDays *
-      selectedRooms.reduce((acc, room) => acc + room.count, 0);
-   const taxAmount = totalAmount * 0.11;
-   const finalAmount = totalAmount + taxAmount;
+   const totalAmount = useMemo(() => {
+      return (
+         totalAmountPerNight *
+         numberOfDays *
+         selectedRooms.reduce((acc, room) => acc + room.count, 0)
+      );
+   }, [totalAmountPerNight, numberOfDays, selectedRooms]);
+
+   const taxAmount = useMemo(() => totalAmount * 0.11, [totalAmount]);
+
+   const finalAmount = useMemo(
+      () => totalAmount + taxAmount,
+      [totalAmount, taxAmount],
+   );
 
    return (
       <>
@@ -75,7 +81,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                            placement="right"
                         >
                            <DatePicker.RangePicker
-                              format="DD MMM YYYY"
+                              format="DD-MM-YYYY"
                               className="py-3 rounded-t-lg cursor-pointer font-main border border-gray-300"
                               inputReadOnly={true}
                               superNextIcon={null}
@@ -135,7 +141,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                </div>
             </div>
          </div>
-         <div className="fixed bottom-0 z-50 left-0 right-0 p-4 bg-white border-t lg:hidden">
+         <div className="fixed bottom-0 z-50 left-0 right-0 px-4 py-2 bg-white border-t-2 lg:hidden">
             <div className="flex justify-between items-center mt-3">
                <div>
                   <span className="block text-lg font-medium">
@@ -145,22 +151,25 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                      {`${selectedRooms.reduce((acc, room) => acc + room.count, 0)} rooms · ${numberOfDays} nights`}
                   </span>
                </div>
-               <Button
-                  className="bg-blue-500 text-white rounded-lg"
-                  onClick={() => setDrawerVisible(true)}
-               >
-                  <FaChevronUp />
-               </Button>
-               <Button
-                  className="mt-4 bg-blue-500 text-white rounded-lg"
-                  onClick={() => setDrawerVisible(true)}
-               >
-                  Book now
-               </Button>
+               <div className="flex flex-col gap-3 align-center justify-center">
+                  <span
+                     className="text-white rounded-lg border hover:bg-gray-100 p-1 flex justify-center align-center"
+                     onClick={() => setDrawerVisible(true)}
+                  >
+                     <FaChevronUp color="#000" />
+                  </span>
+                  <Button
+                     className="bg-blue-500 rounded-lg h-[38px] font-main text-sm"
+                     htmlType="submit"
+                     type="primary"
+                     disabled={!isValid}
+                  >
+                     Book now
+                  </Button>
+               </div>
             </div>
          </div>
          <Drawer
-            title="Booking Summary"
             placement="bottom"
             onClose={() => setDrawerVisible(false)}
             open={drawerVisible}

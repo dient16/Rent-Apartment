@@ -1,5 +1,5 @@
-import type { Document } from 'mongoose';
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
+import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 import type { Apartment } from './apartmentSchema';
 
@@ -32,12 +32,7 @@ const apartmentSchema = new Schema(
   { timestamps: true }
 );
 
-apartmentSchema.index({
-  'location.province': 'text',
-  'location.district': 'text',
-  'location.ward': 'text',
-  'location.street': 'text',
-});
+apartmentSchema.plugin(aggregatePaginate);
 
 const ApartmentModel = mongoose.model<Apartment & Document>('Apartment', apartmentSchema, 'apartments');
 

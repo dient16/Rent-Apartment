@@ -52,7 +52,7 @@ const NavigationBarRoom: FC = () => {
    };
 
    return (
-      <div className="sticky z-10 bg-white border-b border-gray-200 top-[90px]">
+      <div className="sticky z-10 bg-white border-b border-gray-200 top-[110px] hidden lg:block">
          <div className="flex space-x-8">
             {tabs.map((tab) => (
                <button

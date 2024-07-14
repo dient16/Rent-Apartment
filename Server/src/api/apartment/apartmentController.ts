@@ -29,33 +29,9 @@ export const getApartmentDetail = async (req: Request, res: Response, next: Next
 
 export const createApartment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {
-      title,
-      description,
-      location,
-      rooms,
-      houseRules,
-      checkInTime,
-      checkOutTime,
-      safetyInfo,
-      cancellationPolicy,
-      discounts,
-    } = req.body;
     const { _id: userId } = req.user as UserDecode;
 
-    const serviceResponse = await apartmentService.createApartment(
-      userId,
-      title,
-      description,
-      location,
-      rooms,
-      houseRules,
-      checkInTime,
-      checkOutTime,
-      safetyInfo,
-      cancellationPolicy,
-      discounts
-    );
+    const serviceResponse = await apartmentService.createApartment(userId, req.body);
 
     handleServiceResponse(serviceResponse, res);
   } catch (error) {

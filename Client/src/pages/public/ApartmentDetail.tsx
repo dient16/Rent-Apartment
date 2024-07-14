@@ -25,7 +25,7 @@ const { FaLocationDot } = icons;
 
 const ApartmentDetail: React.FC = () => {
    const { apartmentId } = useParams();
-   const [searchParams] = useSearchParams();
+   const [searchParams, setSearchParams] = useSearchParams();
    const navigate = useNavigate();
    const methods = useForm();
 
@@ -40,11 +40,6 @@ const ApartmentDetail: React.FC = () => {
    const endDate =
       searchParams.get('endDate') || dayjs().add(1, 'day').format('YYYY-MM-DD');
    const numberOfGuest = parseInt(searchParams.get('numberOfGuest') || '1', 10);
-   const defaultRoomId = searchParams.get('roomId') || '';
-   const defaultRoomNumber = parseInt(
-      searchParams.get('roomNumber') || '1',
-      10,
-   );
 
    const numberOfDays = dayjs(endDate).diff(dayjs(startDate), 'day');
 
@@ -70,18 +65,14 @@ const ApartmentDetail: React.FC = () => {
          const params = new URLSearchParams(window.location.search);
          params.set('startDate', dates[0].format('YYYY-MM-DD'));
          params.set('endDate', dates[1].format('YYYY-MM-DD'));
-         window.history.replaceState(
-            {},
-            '',
-            `${window.location.pathname}?${params}`,
-         );
+         setSearchParams(params);
          methods.setValue('searchDate', dates);
       }
    };
 
    return isFetching ? (
       <div className="min-h-screen">
-         <Spin spinning={isFetching} fullscreen={isFetching} />
+         <Spin spinning={isFetching} size="large" fullscreen={isFetching} />
       </div>
    ) : !apartment ? (
       <div className="flex justify-center items-center min-h-screen">
@@ -107,7 +98,7 @@ const ApartmentDetail: React.FC = () => {
             <SearchInfoBar
                numberOfGuest={numberOfGuest}
                totalRoomCount={selectedRooms.reduce(
-                  (acc, room) => acc + room.count,
+                  (acc: number, room: RoomValue) => acc + room.count,
                   0,
                )}
                numberOfNights={numberOfDays}
@@ -117,7 +108,7 @@ const ApartmentDetail: React.FC = () => {
             />
             <form
                onSubmit={methods.handleSubmit(handleBooking)}
-               className="flex flex-col gap-5 justify-center w-full max-w-main"
+               className="flex flex-col gap-5 justify-center w-full max-w-main mx-auto px-5 lg:px-7"
             >
                <ImageGallery images={apartment.rooms[0]?.images} />
                <div className="flex gap-5 items-start mt-5">
@@ -143,7 +134,7 @@ const ApartmentDetail: React.FC = () => {
                                  index: number,
                               ) => (
                                  <div
-                                    className="flex col-span-1 gap-2 items-center py-1"
+                                    className="flex gap-2 items-center py-1 flex-wrap"
                                     key={index}
                                  >
                                     <Image
@@ -168,12 +159,7 @@ const ApartmentDetail: React.FC = () => {
                      <Controller
                         name="selectedRooms"
                         control={methods.control}
-                        defaultValue={[
-                           {
-                              roomId: defaultRoomId,
-                              count: defaultRoomNumber,
-                           },
-                        ]}
+                        defaultValue={[]}
                         rules={{ required: 'Please select room' }}
                         render={({ field }) => (
                            <RoomList
@@ -186,7 +172,6 @@ const ApartmentDetail: React.FC = () => {
                   </div>
                   <BookingSummary
                      apartment={apartment}
-                     selectedRooms={selectedRooms}
                      numberOfGuest={numberOfGuest}
                      startDate={startDate}
                      endDate={endDate}
