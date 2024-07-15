@@ -71,7 +71,7 @@ const SearchItem: React.FC<any> = ({
                </div>
             </div>
             <div className="flex flex-col justify-between items-end w-5/12">
-               <div className="hidden gap-2 sm:flex min-w-[150px]">
+               <div className="gap-2 flex min-w-[150px]">
                   <div className="flex flex-col items-end">
                      <span className="font-medium">Review score</span>
                      <span className="font-light">{`${room.rating.totalRating} reviews`}</span>

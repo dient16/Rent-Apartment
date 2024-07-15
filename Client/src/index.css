@@ -50,13 +50,6 @@
    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-/* .input-container .input-field:focus + .input-label { */
-/*    top: 10px; */
-/*    left: 20px; */
-/*    font-size: 15px; */
-/*    font-weight: 500; */
-/* } */
-
 .input-container .ant-input-number-input:focus + .input-label {
    top: 10px;
    left: 20px;
@@ -73,4 +66,10 @@
 .ant-upload {
    width: 350px !important;
    height: 320px !important;
+}
+.custom-datepicker .rdrDefinedRangesWrapper {
+   display: none;
+}
+.ant-collapse-header {
+   padding: 0 !important;
 }

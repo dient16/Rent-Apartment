@@ -21,3 +21,5 @@ export { default as SearchInfoBar } from './SearchInfoBar/SearchInfoBar';
 export { default as Results } from './SearchResult/Result';
 export { default as SearchSection } from './SearchResult/SearchSection';
 export { default as FilterSection } from './SearchResult/FilterSection';
+export { default as SummaryCard } from './SearchResult/SummaryCard';
+export { default as CustomDatePicker } from './CustomDatePicker/CustomDatePicker';

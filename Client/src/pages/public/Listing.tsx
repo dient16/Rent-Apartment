@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { SearchSection, FilterSection, Results } from '@/components';
+import {
+   SearchSection,
+   FilterSection,
+   Results,
+   SummaryCard,
+} from '@/components';
 import { apiSearchRoom } from '@/apis';
-import { Button, Drawer } from 'antd';
-import { MenuOutlined } from '@ant-design/icons';
+import { Drawer } from 'antd';
 import { useForm, FormProvider } from 'react-hook-form';
 
 const Listing: React.FC = () => {
@@ -59,13 +63,10 @@ const Listing: React.FC = () => {
       <div className="flex flex-col justify-center items-center w-full font-main bg-gray-100">
          <div className="flex flex-col sm:flex-row gap-5 mt-10 mb-5 w-full min-h-screen max-w-main">
             <div className="md:hidden w-full flex justify-end px-4">
-               <Button
-                  type="primary"
-                  icon={<MenuOutlined />}
+               <SummaryCard
+                  searchParams={searchParams}
                   onClick={() => setDrawerVisible(true)}
-               >
-                  Search & Filter
-               </Button>
+               />
             </div>
 
             <Drawer
@@ -82,7 +83,6 @@ const Listing: React.FC = () => {
                         searchParams={searchParams}
                         handleSearch={methods.handleSubmit(handleSearch)}
                      />
-                     <FilterSection />
                   </div>
                </FormProvider>
             </Drawer>

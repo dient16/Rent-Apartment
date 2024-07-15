@@ -1,11 +1,15 @@
-import { Button, DatePicker, Dropdown, Input, Tooltip } from 'antd';
-import React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
-import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
+import { Button, Dropdown, Input, Tooltip } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import { FaMapMarkerAlt } from 'react-icons/fa';
 import icons from '@/utils/icons';
-import { DropDownItem } from '@/components';
+import { DropDownItem, CustomDatePicker } from '@/components';
+import moment from 'moment';
+import type { RangeKeyDict } from 'react-date-range';
+
 const { PiUserThin } = icons;
+
 interface SearchSectionProps {
    searchParams: URLSearchParams;
    handleSearch: () => void;
@@ -15,11 +19,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
    searchParams,
    handleSearch,
 }) => {
-   const {
-      control,
-      formState: { errors },
-      getValues,
-   } = useFormContext();
+   const { control, getValues } = useFormContext();
 
    const numberOfGuests: number =
       +searchParams.get('numberOfGuests') !== 0
@@ -31,6 +31,21 @@ const SearchSection: React.FC<SearchSectionProps> = ({
          : 1;
    const startDate: string | null = searchParams.get('startDate');
    const endDate: string | null = searchParams.get('endDate');
+
+   const [state, setState] = useState({
+      startDate: startDate ? moment(startDate).toDate() : new Date(),
+      endDate: endDate
+         ? moment(endDate).toDate()
+         : moment().add(7, 'days').toDate(),
+   });
+
+   const handleDateChange = (ranges: RangeKeyDict) => {
+      const { selection } = ranges;
+      setState({
+         startDate: selection.startDate,
+         endDate: selection.endDate,
+      });
+   };
 
    return (
       <div className="py-5 pb-10 w-full rounded-lg">
@@ -44,18 +59,22 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                   }}
                   control={control}
                   defaultValue={searchParams.get('province')}
-                  render={({ field }) => (
+                  render={({ field, fieldState: { error } }) => (
                      <Tooltip
-                        title={errors?.searchText?.message as string}
+                        title={error?.message}
                         color="red"
-                        open={!!errors.searchText}
+                        open={!!error}
                         placement="right"
                         zIndex={5}
                      >
                         <Input
                            size="large"
                            placeholder="Search"
-                           className="py-3 px-5 w-full rounded-xl border"
+                           className="py-3 pl-10 pr-5 w-full rounded-xl border"
+                           status={error ? 'error' : ''}
+                           prefix={
+                              <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                           }
                            {...field}
                         />
                      </Tooltip>
@@ -67,32 +86,26 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                   rules={{
                      required: 'Please select the time',
                   }}
-                  defaultValue={
-                     startDate && endDate
-                        ? [dayjs(startDate), dayjs(endDate)]
-                        : undefined
-                  }
-                  render={({ field }) => (
+                  defaultValue={[state.startDate, state.endDate]}
+                  render={({ field, fieldState: { error } }) => (
                      <Tooltip
-                        title={errors?.searchDate?.message as string}
+                        title={error?.message}
                         color="red"
-                        open={!!errors.searchDate}
+                        open={!!error}
                         placement="right"
                         zIndex={5}
                      >
-                        <DatePicker.RangePicker
-                           format="DD-MM-YYYY"
-                           className="py-3 px-2 mt-2 w-full rounded-xl font-main"
-                           inputReadOnly={true}
-                           superNextIcon={null}
-                           superPrevIcon={null}
-                           placeholder={['Check in', 'Check out']}
-                           popupClassName="show-card-md rounded-full"
-                           {...field}
-                           onChange={(dates) => field.onChange(dates)}
-                           disabledDate={(current) =>
-                              current && current < dayjs().startOf('day')
-                           }
+                        <CustomDatePicker
+                           onChange={(ranges) => {
+                              handleDateChange(ranges);
+                              field.onChange([
+                                 ranges.selection.startDate,
+                                 ranges.selection.endDate,
+                              ]);
+                           }}
+                           initialStartDate={state.startDate}
+                           initialEndDate={state.endDate}
+                           className="mt-2"
                         />
                      </Tooltip>
                   )}
@@ -107,11 +120,11 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                      guests: +numberOfGuests,
                      rooms: +numberOfRooms,
                   }}
-                  render={({ field }) => (
+                  render={({ field, fieldState: { error } }) => (
                      <Tooltip
-                        title={errors?.searchGuest?.message as string}
+                        title={error?.message}
                         color="red"
-                        open={!!errors.searchGuest}
+                        open={!!error}
                         placement="left"
                         zIndex={5}
                      >
@@ -124,6 +137,9 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                            )}
                            placement="bottomLeft"
                            trigger={['click']}
+                           getPopupContainer={(trigger) =>
+                              trigger.parentElement!
+                           }
                         >
                            <Button className="my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px]">
                               <PiUserThin size={25} />
@@ -135,7 +151,6 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                      </Tooltip>
                   )}
                />
-
                <Button
                   className="px-5 w-full bg-blue-500 rounded-xl font-main h-[50px]"
                   type="primary"
