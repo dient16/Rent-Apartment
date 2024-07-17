@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import dayjs from 'dayjs';
 import {
    SearchSection,
    FilterSection,
@@ -9,12 +8,16 @@ import {
    SummaryCard,
 } from '@/components';
 import { apiSearchRoom } from '@/apis';
-import { Drawer } from 'antd';
+import { Drawer, Button } from 'antd';
 import { useForm, FormProvider } from 'react-hook-form';
+import { SearchOutlined } from '@ant-design/icons';
+import moment from 'moment';
+import { FiFilter } from 'react-icons/fi';
 
 const Listing: React.FC = () => {
    const [searchParams, setSearchParams] = useSearchParams();
    const [drawerVisible, setDrawerVisible] = useState(false);
+   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
 
    const methods = useForm();
 
@@ -34,12 +37,13 @@ const Listing: React.FC = () => {
          : 1;
 
    const handleSearch = (data: any) => {
+      console.log(data);
       const queryParams = new URLSearchParams({
          province: data.searchText,
-         startDate: dayjs(data.searchDate[0]).format('YYYY-MM-DD'),
-         endDate: dayjs(data.searchDate[1]).format('YYYY-MM-DD'),
-         numberOfGuest: data.searchGuest.guest.toString(),
-         roomNumber: data.searchGuest.room.toString(),
+         startDate: moment(data.searchDate[0]).format('YYYY-MM-DD'),
+         endDate: moment(data.searchDate[1]).format('YYYY-MM-DD'),
+         numberOfGuest: data.searchGuest.guests.toString(),
+         roomNumber: data.searchGuest.rooms.toString(),
       });
       if (
          data.searchPrice &&
@@ -51,6 +55,7 @@ const Listing: React.FC = () => {
       }
       setSearchParams(queryParams);
       setDrawerVisible(false);
+      setFilterDrawerVisible(false);
    };
 
    const handleChangePage = (page: number) => {
@@ -61,12 +66,18 @@ const Listing: React.FC = () => {
 
    return (
       <div className="flex flex-col justify-center items-center w-full font-main bg-gray-100">
-         <div className="flex flex-col sm:flex-row gap-5 mt-10 mb-5 w-full min-h-screen max-w-main">
-            <div className="md:hidden w-full flex justify-end px-4">
+         <div className="flex flex-col lg:flex-row gap-5 lg:mt-10 mt-2 mb-5 w-full min-h-screen max-w-main px-5 sm:px-5">
+            <div className="lg:hidden w-full flex justify-center items-center">
                <SummaryCard
                   searchParams={searchParams}
                   onClick={() => setDrawerVisible(true)}
                />
+               <span
+                  onClick={() => setFilterDrawerVisible(true)}
+                  className="filter-icon cursor-pointer ml-2 text-2xl"
+               >
+                  <FiFilter size={30} />
+               </span>
             </div>
 
             <Drawer
@@ -74,30 +85,69 @@ const Listing: React.FC = () => {
                placement="bottom"
                onClose={() => setDrawerVisible(false)}
                open={drawerVisible}
-               className="md:hidden"
+               className="lg:hidden"
                height="100%"
+               zIndex={800}
             >
                <FormProvider {...methods}>
                   <div className="flex flex-col gap-5">
-                     <SearchSection
-                        searchParams={searchParams}
-                        handleSearch={methods.handleSubmit(handleSearch)}
-                     />
+                     <form onSubmit={methods.handleSubmit(handleSearch)}>
+                        <SearchSection searchParams={searchParams} />
+                        <Button
+                           className="px-5 w-full bg-blue-500 rounded-xl font-main h-[50px]"
+                           type="primary"
+                           icon={<SearchOutlined />}
+                           htmlType="submit"
+                        >
+                           Search
+                        </Button>
+                     </form>
                   </div>
                </FormProvider>
             </Drawer>
 
-            <div className="hidden sm:block w-full sm:w-1/4 lg:w-1/5 bg-white px-5 rounded-lg">
+            <Drawer
+               title="Filter"
+               placement="bottom"
+               onClose={() => setFilterDrawerVisible(false)}
+               open={filterDrawerVisible}
+               height="100%"
+            >
                <FormProvider {...methods}>
-                  <SearchSection
-                     searchParams={searchParams}
-                     handleSearch={methods.handleSubmit(handleSearch)}
-                  />
-                  <FilterSection />
+                  <div className="flex flex-col gap-5">
+                     <form onSubmit={methods.handleSubmit(handleSearch)}>
+                        <FilterSection />
+                        <Button
+                           className="px-5 w-full bg-blue-500 rounded-xl font-main h-[50px]"
+                           type="primary"
+                           icon={<SearchOutlined />}
+                           htmlType="submit"
+                        >
+                           Apply Filters
+                        </Button>
+                     </form>
+                  </div>
+               </FormProvider>
+            </Drawer>
+
+            <div className="hidden lg:block min-w-[320px] bg-white px-5 rounded-lg">
+               <FormProvider {...methods}>
+                  <form onSubmit={methods.handleSubmit(handleSearch)}>
+                     <SearchSection searchParams={searchParams} />
+                     <Button
+                        className="px-5 w-full bg-blue-500 rounded-xl font-main h-[50px]"
+                        type="primary"
+                        icon={<SearchOutlined />}
+                        htmlType="submit"
+                     >
+                        Search
+                     </Button>
+                     <FilterSection />
+                  </form>
                </FormProvider>
             </div>
 
-            <div className="w-full sm:w-3/4 lg:w-4/5">
+            <div className="w-full">
                <Results
                   data={data}
                   isFetching={isFetching}

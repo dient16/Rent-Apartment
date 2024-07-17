@@ -1,8 +1,15 @@
 import React from 'react';
 import { Pagination, Skeleton } from 'antd';
-import SearchItem from './SearchItem';
-
-const Results: React.FC<any> = ({
+import ResultItem from './ResultItem';
+interface ResultsProps {
+   data: any;
+   isFetching: boolean;
+   numberOfGuest: number;
+   roomNumber: number;
+   searchParams: URLSearchParams;
+   handleChangePage: (page: number) => void;
+}
+const Results: React.FC<ResultsProps> = ({
    data,
    isFetching,
    numberOfGuest,
@@ -11,13 +18,13 @@ const Results: React.FC<any> = ({
    handleChangePage,
 }) => {
    return (
-      <div className="flex flex-col gap-5 w-full">
-         <div className="flex items-center p-5 rounded-xl h-[60px] bg-white">
-            <div className="text-lg font-normal">{`${
+      <div className="flex flex-col gap-2 w-full">
+         <div className="flex items-center lg:p-5 px-7 py-2 rounded-xl bg-white">
+            <div className="lg:text-lg text-md font-normal">{`${
                data?.data?.totalResults || 0
             } Search results`}</div>
          </div>
-         <div className="flex flex-col gap-5 w-full h-full rounded-lg">
+         <div className="flex flex-col gap-5 w-full h-full rounded-lg min-h-screen">
             {isFetching ? (
                <>
                   {[1, 2, 3, 4].map((index) => (
@@ -39,7 +46,7 @@ const Results: React.FC<any> = ({
                      </div>
                   )}
                   {(data?.data?.apartments || []).map((room) => (
-                     <SearchItem
+                     <ResultItem
                         key={room._id}
                         room={room}
                         roomNumber={roomNumber}

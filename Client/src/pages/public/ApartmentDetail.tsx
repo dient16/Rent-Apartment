@@ -1,3 +1,4 @@
+import React from 'react';
 import {
    Map,
    NavigationBarRoom,
@@ -8,12 +9,12 @@ import {
    BookingSummary,
    SearchInfoBar,
 } from '@/components';
-import { Button, Result, Spin, Image } from 'antd';
+import { Button, Result, Spin } from 'antd';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { apiApartmentDetail } from '@/apis';
-import dayjs from 'dayjs';
+import moment from 'moment';
 import { path } from '@/utils/constant';
 import icons from '@/utils/icons';
 
@@ -35,20 +36,26 @@ const ApartmentDetail: React.FC = () => {
       staleTime: 0,
    });
 
-   const startDate =
-      searchParams.get('startDate') || dayjs().format('YYYY-MM-DD');
-   const endDate =
-      searchParams.get('endDate') || dayjs().add(1, 'day').format('YYYY-MM-DD');
+   const parseDate = (dateString: string | null) => {
+      const date = dateString ? moment(dateString, 'YYYY-MM-DD') : undefined;
+      return date?.isValid() ? date.toDate() : undefined;
+   };
+
+   const startDate = parseDate(searchParams.get('startDate'));
+   const endDate = parseDate(searchParams.get('endDate'));
    const numberOfGuest = parseInt(searchParams.get('numberOfGuest') || '1', 10);
 
-   const numberOfDays = dayjs(endDate).diff(dayjs(startDate), 'day');
+   const numberOfDays =
+      startDate && endDate
+         ? moment(endDate).diff(moment(startDate), 'days')
+         : 0;
 
    const selectedRooms = methods.watch('selectedRooms', []);
 
    const handleBooking = (data: any) => {
       const queryParams = new URLSearchParams({
-         start_date: data.searchDate[0].format('YYYY-MM-DD'),
-         end_date: data.searchDate[1].format('YYYY-MM-DD'),
+         start_date: moment(data.searchDate[0]).format('YYYY-MM-DD'),
+         end_date: moment(data.searchDate[1]).format('YYYY-MM-DD'),
          number_of_guest: numberOfGuest.toString(),
          room_number: selectedRooms
             .map((room: RoomValue) => room.count)
@@ -60,11 +67,11 @@ const ApartmentDetail: React.FC = () => {
       navigate(`/${path.BOOKING_CONFIRM}?${queryParams}`);
    };
 
-   const handleDateChange = (dates: dayjs.Dayjs[]) => {
+   const handleDateChange = (dates: [Date, Date]) => {
       if (dates) {
          const params = new URLSearchParams(window.location.search);
-         params.set('startDate', dates[0].format('YYYY-MM-DD'));
-         params.set('endDate', dates[1].format('YYYY-MM-DD'));
+         params.set('startDate', moment(dates[0]).format('YYYY-MM-DD'));
+         params.set('endDate', moment(dates[1]).format('YYYY-MM-DD'));
          setSearchParams(params);
          methods.setValue('searchDate', dates);
       }
@@ -112,7 +119,7 @@ const ApartmentDetail: React.FC = () => {
             >
                <ImageGallery images={apartment.rooms[0]?.images} />
                <div className="flex gap-5 items-start mt-5">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col w-full">
                      <div className="flex flex-col gap-2 justify-center mt-5 font-main">
                         <div className="text-3xl">{apartment?.title}</div>
                         <div className="flex gap-1 items-center text-sm font-light font-main">
@@ -127,7 +134,7 @@ const ApartmentDetail: React.FC = () => {
                         <h3 id="overview" className="text-xl font-normal">
                            This place has something for you
                         </h3>
-                        <div className="flex gap-10 mt-5 font-light">
+                        <div className="flex lg:gap-10 gap-5 mt-5 font-light flex-wrap">
                            {apartment.rooms[0]?.amenities.map(
                               (
                                  amenity: { name: string; icon: string },
@@ -137,9 +144,8 @@ const ApartmentDetail: React.FC = () => {
                                     className="flex gap-2 items-center py-1 flex-wrap"
                                     key={index}
                                  >
-                                    <Image
-                                       height={24}
-                                       preview={false}
+                                    <img
+                                       className="h-4 object-cover"
                                        src={amenity.icon}
                                     />
                                     <span>{amenity.name}</span>

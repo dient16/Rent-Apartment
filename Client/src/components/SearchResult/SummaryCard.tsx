@@ -1,5 +1,8 @@
 import React from 'react';
 import moment from 'moment';
+import { FaMapMarkerAlt } from 'react-icons/fa';
+import { FiCalendar, FiUser } from 'react-icons/fi';
+import { AiOutlineClockCircle } from 'react-icons/ai';
 
 interface SummaryCardProps {
    searchParams: URLSearchParams;
@@ -24,17 +27,37 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ searchParams, onClick }) => {
 
    return (
       <div
-         className="w-full bg-white p-4 rounded-lg shadow-md flex flex-row items-center justify-between gap-4 cursor-pointer hover:bg-gray-100 transition-colors"
+         className="w-full bg-white py-3 px-4 md:px-10 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors md:hover:bg-gray-200 md:shadow-sm md:hover:shadow-md"
          onClick={onClick}
       >
-         <span className="font-semibold">{province || 'Location'}</span>
-         <span className="font-semibold">
-            {formattedStartDate} - {formattedEndDate}
-         </span>
-         <span className="font-semibold">{nights} nights</span>
-         <span className="font-semibold">
-            {numberOfGuests} guests, {numberOfRooms} rooms
-         </span>
+         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-8 w-full">
+            <div className="flex items-center gap-2">
+               <FaMapMarkerAlt className="text-gray-500" />
+               <span className="text-sm font-normal md:text-base">
+                  {province || 'Location'}
+               </span>
+            </div>
+            <div className="flex items-center gap-3">
+               <div className="flex items-center gap-2 md:ml-4 md:mt-0">
+                  <FiCalendar className="text-gray-500" />
+                  <span className="text-sm md:text-base font-light">
+                     {formattedStartDate} - {formattedEndDate}
+                  </span>
+               </div>
+               <div className="flex items-center gap-2 md:mt-0">
+                  <AiOutlineClockCircle className="text-gray-500" />
+                  <span className="text-sm md:text-base font-light">
+                     {nights} nights
+                  </span>
+               </div>
+            </div>
+            <div className="flex items-center gap-2 md:mt-0">
+               <FiUser className="text-gray-500" />
+               <span className="text-sm md:text-base font-light">
+                  {numberOfGuests} guests, {numberOfRooms} rooms
+               </span>
+            </div>
+         </div>
       </div>
    );
 };

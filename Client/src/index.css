@@ -36,29 +36,7 @@
 .ant-picker-time-panel {
    display: none !important;
 }
-.input-container {
-   position: relative;
-   /* border: 1px solid #ccc; */
-   /* border-radius: 8px; */
-   transition:
-      border-color 0.3s,
-      box-shadow 0.3s;
-}
-
-.input-container:focus-within {
-   border-color: #4096ff;
-   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-.input-container .ant-input-number-input:focus + .input-label {
-   top: 10px;
-   left: 20px;
-   font-size: 15px;
-   font-weight: 500;
-}
-.input-container .ant-input-number-input {
-   height: 70px;
-}
+/* set width and height upload images */
 .ant-upload-list-item-container {
    width: 350px !important;
    height: 320px !important;
@@ -71,5 +49,8 @@
    display: none;
 }
 .ant-collapse-header {
+   padding: 0 !important;
+}
+.ant-drawer-content .ant-drawer-body {
    padding: 0 !important;
 }

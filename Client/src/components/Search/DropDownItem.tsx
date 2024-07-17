@@ -4,29 +4,29 @@ import icons from '@/utils/icons';
 
 interface DropDownItemProps {
    value: {
-      guest: number;
-      room: number;
+      guests: number;
+      rooms: number;
    };
-   onChange: (newValue: { guest: number; room: number }) => void;
+   onChange: (newValue: { guests: number; rooms: number }) => void;
 }
 
 const DropDownItem: React.FC<DropDownItemProps> = ({ value, onChange }) => {
    const { BiMinus, AiOutlinePlus } = icons;
 
    const handleGuestChange = (amount: number) => {
-      if (value.guest + amount < value.room) {
+      if (value.guests + amount < value.rooms) {
          message.error(
             'The number of rooms cannot be less than the number of people',
          );
          return;
       }
-      onChange({ ...value, guest: Math.max(1, value.guest + amount) });
+      onChange({ ...value, guests: Math.max(1, value.guests + amount) });
    };
 
    const handleRoomChange = (amount: number) => {
       onChange({
          ...value,
-         room: Math.max(1, Math.min(value.guest, value.room + amount)),
+         rooms: Math.max(1, Math.min(value.guests, value.rooms + amount)),
       });
    };
 
@@ -41,7 +41,7 @@ const DropDownItem: React.FC<DropDownItemProps> = ({ value, onChange }) => {
                   onClick={() => handleGuestChange(-1)}
                />
                <div className="font-main font-medium text-base w-[15px] flex items-center justify-center">
-                  {value.guest || 1}
+                  {value.guests || 1}
                </div>
                <Button
                   className="w-[30px] h-[30px] rounded-full border border-gray-900 flex items-center justify-center"
@@ -59,7 +59,7 @@ const DropDownItem: React.FC<DropDownItemProps> = ({ value, onChange }) => {
                   onClick={() => handleRoomChange(-1)}
                />
                <div className="font-main font-medium text-base w-[15px] flex items-center justify-center">
-                  {value.room || 1}
+                  {value.rooms || 1}
                </div>
                <Button
                   className="w-[30px] h-[30px] rounded-full border border-gray-900 flex items-center justify-center"

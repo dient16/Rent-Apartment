@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
-import { Button, Tooltip, Drawer, DatePicker } from 'antd';
-import { Controller, useFormContext } from 'react-hook-form';
+import React, { useState, useMemo } from 'react';
+import { Button, Tooltip, Drawer } from 'antd';
+import { useFormContext } from 'react-hook-form';
 import { PiUserThin } from 'react-icons/pi';
 import { FaChevronUp } from 'react-icons/fa';
-import dayjs from 'dayjs';
+import moment from 'moment';
 
 interface RoomValue {
    roomId: string;
@@ -13,8 +13,8 @@ interface RoomValue {
 interface BookingSummaryProps {
    apartment: Apartment & { rooms: RoomOption[] };
    numberOfGuest: number;
-   startDate: string;
-   endDate: string;
+   startDate: Date;
+   endDate: Date;
    numberOfDays: number;
 }
 
@@ -26,7 +26,6 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
    numberOfDays,
 }) => {
    const {
-      control,
       watch,
       formState: { isValid },
    } = useFormContext();
@@ -62,43 +61,31 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
 
    return (
       <>
-         <div className="hidden lg:block sticky p-6 mt-5 rounded-lg shadow min-w-[370px] shadow-gray-400 top-[140px]">
+         <div className="hidden xl:block sticky p-6 mt-5 rounded-lg shadow min-w-[350px] shadow-gray-400 top-[140px]">
             <div className="flex flex-col gap-3 justify-center items-center w-full">
                <div className="text-xl font-medium">
                   <span>{totalAmountPerNight.toLocaleString()} VND</span>
                   <span className="text-base font-light">/ night</span>
                </div>
                <div className="flex flex-col justify-center">
-                  <Controller
-                     name="searchDate"
-                     control={control}
-                     defaultValue={[dayjs(startDate), dayjs(endDate)]}
-                     render={({ field, fieldState }) => (
-                        <Tooltip
-                           title={fieldState.error?.message}
-                           color="red"
-                           open={!!fieldState.error}
-                           placement="right"
-                        >
-                           <DatePicker.RangePicker
-                              format="DD-MM-YYYY"
-                              className="py-3 rounded-t-lg cursor-pointer font-main border border-gray-300"
-                              inputReadOnly={true}
-                              superNextIcon={null}
-                              superPrevIcon={null}
-                              placeholder={['Check in', 'Check out']}
-                              popupClassName="rounded-full"
-                              {...field}
-                              disabledDate={(current) =>
-                                 current && current < dayjs().startOf('day')
-                              }
-                           />
-                        </Tooltip>
-                     )}
-                  />
+                  <div className="flex items-center py-3 rounded-t-lg cursor-pointer font-main border border-gray-300">
+                     <Tooltip title="Check-in Date">
+                        <span className="mx-2">
+                           {moment(startDate).format('DD-MM-YYYY')}
+                        </span>
+                     </Tooltip>
+                     <Tooltip title="Check-out Date">
+                        <span className="mx-2">
+                           {moment(endDate).format('DD-MM-YYYY')}
+                        </span>
+                     </Tooltip>
+                  </div>
                   <div className="flex gap-1 justify-center items-center w-full font-normal bg-white rounded-b-lg border-t-0 border-gray-300 cursor-default select-none font-main h-[48px]">
                      <PiUserThin size={25} />
-                     <span className="">{`${numberOfGuest} adult · ${selectedRooms.reduce((acc, room) => acc + room.count, 0)} rooms`}</span>
+                     <span className="">{`${numberOfGuest} adult · ${selectedRooms.reduce(
+                        (acc, room) => acc + room.count,
+                        0,
+                     )} rooms`}</span>
                   </div>
                   <Button
                      className="mt-3 bg-blue-500 rounded-lg h-[38px] font-main text-lg"
@@ -124,7 +111,10 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                   <div className="flex justify-between items-center mt-1 w-full font-light">
                      <div>
                         <span>{totalAmountPerNight.toLocaleString()} VND</span>
-                        <span>{` x ${selectedRooms.reduce((acc, room) => acc + room.count, 0)} rooms`}</span>
+                        <span>{` x ${selectedRooms.reduce(
+                           (acc, room) => acc + room.count,
+                           0,
+                        )} rooms`}</span>
                      </div>
                      <span>{totalAmount.toLocaleString()} VND</span>
                   </div>
@@ -133,7 +123,10 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                      <span>{`+ ${taxAmount.toLocaleString()} VND`}</span>
                   </div>
                   <div className="flex justify-between items-center pt-1 w-full font-light border-t">
-                     <span className="flex-1">Total amount, tax included</span>
+                     <span className="flex-1">
+                        Total amount,
+                        <br /> tax included
+                     </span>
                      <span className="flex-2 text-right">
                         {finalAmount.toLocaleString()} VND
                      </span>
@@ -141,14 +134,17 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                </div>
             </div>
          </div>
-         <div className="fixed bottom-0 z-50 left-0 right-0 px-4 py-2 bg-white border-t-2 lg:hidden">
+         <div className="fixed bottom-0 z-50 left-0 right-0 px-4 py-2 bg-white border-t-2 xl:hidden">
             <div className="flex justify-between items-center mt-3">
                <div>
                   <span className="block text-lg font-medium">
                      {finalAmount.toLocaleString()} VND
                   </span>
                   <span className="block text-sm font-light">
-                     {`${selectedRooms.reduce((acc, room) => acc + room.count, 0)} rooms · ${numberOfDays} nights`}
+                     {`${selectedRooms.reduce(
+                        (acc, room) => acc + room.count,
+                        0,
+                     )} rooms · ${numberOfDays} nights`}
                   </span>
                </div>
                <div className="flex flex-col gap-3 align-center justify-center">
@@ -183,11 +179,11 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                <div className="flex flex-col justify-center w-full px-6">
                   <div className="flex justify-between items-center py-2 border-b">
                      <span>Check-in:</span>
-                     <span>{dayjs(startDate).format('DD MMM YYYY')}</span>
+                     <span>{moment(startDate).format('DD MMM YYYY')}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
                      <span>Check-out:</span>
-                     <span>{dayjs(endDate).format('DD MMM YYYY')}</span>
+                     <span>{moment(endDate).format('DD MMM YYYY')}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
                      <span>Nights:</span>
@@ -226,7 +222,10 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                            <span>
                               {totalAmountPerNight.toLocaleString()} VND
                            </span>
-                           <span>{` x ${selectedRooms.reduce((acc, room) => acc + room.count, 0)} rooms`}</span>
+                           <span>{` x ${selectedRooms.reduce(
+                              (acc, room) => acc + room.count,
+                              0,
+                           )} rooms`}</span>
                         </div>
                         <span>{totalAmount.toLocaleString()} VND</span>
                      </div>

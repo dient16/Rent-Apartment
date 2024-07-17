@@ -1,4 +1,5 @@
 type Room = {
+   _id: string;
    roomType: string;
    amenities: string[];
    size: number;
@@ -40,8 +41,8 @@ interface SearchData {
    searchText: string;
    searchDate: [Date, Date];
    searchGuest: {
-      guest: number;
-      room: number;
+      guests: number;
+      rooms: number;
    };
    room: number;
    searchPrice?: number;

@@ -1,10 +1,9 @@
 import React from 'react';
-import { Button, DatePicker, Dropdown, Tooltip } from 'antd';
+import { Button, Dropdown, Tooltip } from 'antd';
 import icons from '@/utils/icons';
-import { DropDownItem } from '@/components';
+import { CustomDatePicker, DropDownItem } from '@/components';
 import { useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
-import dayjs from 'dayjs';
 import moment from 'moment';
 const { PiUserThin, FaArrowRight } = icons;
 
@@ -20,14 +19,13 @@ const Search: React.FC = () => {
    const handleSearch = (data: SearchData) => {
       const queryParams = new URLSearchParams({
          province: data.searchText,
-         startDate: dayjs(data.searchDate[0]).format('YYYY-MM-DD'),
-         endDate: dayjs(data.searchDate[1]).format('YYYY-MM-DD'),
-         numberOfGuest: data.searchGuest.guest.toString(),
-         roomNumber: data.searchGuest.room.toString(),
+         startDate: moment(data.searchDate[0]).format('YYYY-MM-DD'),
+         endDate: moment(data.searchDate[1]).format('YYYY-MM-DD'),
+         numberOfGuest: data.searchGuest.guests.toString(),
+         roomNumber: data.searchGuest.rooms.toString(),
       });
       navigate(`/listing?${queryParams.toString()}`);
    };
-   const isMobile = window.innerWidth <= 767;
    return (
       <form
          onSubmit={handleSubmit(handleSearch)}
@@ -66,6 +64,7 @@ const Search: React.FC = () => {
             rules={{
                required: 'Please select the time',
             }}
+            defaultValue={[new Date(), new Date()]}
             render={({ field }) => (
                <Tooltip
                   title={errors?.searchDate?.message as string}
@@ -79,21 +78,14 @@ const Search: React.FC = () => {
                         <span>Check-in</span>
                         <span className="ml-16 lg:ml-20">Check-out</span>
                      </div>
-                     <DatePicker.RangePicker
-                        size="large"
-                        format="DD-MM-YYYY"
-                        className="text-lg border-none shadow-none outline-none lg:py-3 font-main"
-                        inputReadOnly={true}
-                        superNextIcon={null}
-                        superPrevIcon={null}
-                        placeholder={['Add day', 'Add day']}
-                        suffixIcon={null}
-                        {...field}
-                        showTime={isMobile}
+                     <CustomDatePicker
+                        value={field.value}
                         onChange={(dates) => field.onChange(dates)}
-                        disabledDate={(current) =>
-                           current && current < moment().startOf('day')
-                        }
+                        className="text-lg border-none shadow-none outline-none font-main h-5"
+                        isShowNight={false}
+                        isShowLeftIcon={false}
+                        isShowRightIcon={false}
+                        format="DD-MM-YYYY"
                      />
                   </div>
                </Tooltip>
@@ -106,7 +98,7 @@ const Search: React.FC = () => {
             rules={{
                required: 'Date is required',
             }}
-            defaultValue={{ guest: 1, room: 1 }}
+            defaultValue={{ guests: 1, rooms: 1 }}
             render={({ field }) => (
                <Tooltip
                   title={errors?.searchGuest?.message as string}
@@ -128,8 +120,10 @@ const Search: React.FC = () => {
                      >
                         <div className="flex gap-1 justify-center items-center text-lg text-black cursor-pointer lg:py-2 font-main">
                            <PiUserThin size={25} />
-                           <span>{`${getValues('searchGuest')?.guest || 1} adult · ${
-                              getValues('searchGuest')?.room || 1
+                           <span>{`${
+                              getValues('searchGuest')?.guests || 1
+                           } adult · ${
+                              getValues('searchGuest')?.rooms || 1
                            } rooms`}</span>
                         </div>
                      </Dropdown>

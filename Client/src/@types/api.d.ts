@@ -1,5 +1,5 @@
 interface Res<T = any> {
-    success: boolean;
-    data?: T;
-    message?: string;
+   success: boolean;
+   data?: T;
+   message?: string;
 }
