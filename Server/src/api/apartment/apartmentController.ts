@@ -1,4 +1,4 @@
-import { type NextFunction, query, type Request, type Response } from 'express';
+import { type NextFunction, type Request, type Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
@@ -20,7 +20,7 @@ export const getApartmentDetail = async (req: Request, res: Response, next: Next
   try {
     const { apartmentId } = req.params;
 
-    const serviceResponse = await apartmentService.getApartmentDetail(apartmentId, query);
+    const serviceResponse = await apartmentService.getApartmentDetail(apartmentId, req.query as any);
     handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
@@ -29,33 +29,9 @@ export const getApartmentDetail = async (req: Request, res: Response, next: Next
 
 export const createApartment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {
-      title,
-      description,
-      location,
-      rooms,
-      houseRules,
-      checkInTime,
-      checkOutTime,
-      safetyInfo,
-      cancellationPolicy,
-      discounts,
-    } = req.body;
     const { _id: userId } = req.user as UserDecode;
 
-    const serviceResponse = await apartmentService.createApartment(
-      userId,
-      title,
-      description,
-      location,
-      rooms,
-      houseRules,
-      checkInTime,
-      checkOutTime,
-      safetyInfo,
-      cancellationPolicy,
-      discounts
-    );
+    const serviceResponse = await apartmentService.createApartment(userId, req.body);
 
     handleServiceResponse(serviceResponse, res);
   } catch (error) {

@@ -60,7 +60,7 @@ const Header: React.FC = () => {
       },
    ];
    return (
-      <header className="flex sticky top-0 z-10 justify-center items-center w-full bg-white h-[90px]">
+      <header className="flex sticky top-0 z-10 justify-center items-center w-full bg-white lg:h-[90px] h-[60px]">
          <div className="flex justify-between px-3 w-full select-none md:px-10">
             <div className="lg:hidden" onClick={() => setOpenNavigate(true)}>
                <CgMenuLeft size={30} />

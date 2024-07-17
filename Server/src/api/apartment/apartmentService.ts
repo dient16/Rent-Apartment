@@ -1,17 +1,56 @@
 import { default as to } from 'await-to-js';
 import { StatusCodes } from 'http-status-codes';
+import moment from 'moment';
 import mongoose, { Types } from 'mongoose';
 import Stripe from 'stripe';
 
-import Room from '@/api/room/roomModel';
+import RoomModel from '@/api/room/roomModel';
+import type { Room } from '@/api/room/roomSchema';
 import User from '@/api/user/userModel';
 import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 import { env } from '@/common/utils/envConfig';
 
 import { roomService } from '../room/roomService';
 import ApartmentModel from './apartmentModel';
-import type { CreateRoom, Location } from './apartmentSchema';
-const { STRIPE_SECRET_KEY } = env;
+import type { Apartment, GetApartmentQuery } from './apartmentSchema';
+const { STRIPE_SECRET_KEY, SERVER_URL } = env;
+
+interface PaginatedResult<T> {
+  docs: T[];
+  totalDocs: number;
+  limit: number;
+  totalPages: number;
+  page: number;
+  pagingCounter: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  prevPage: number | null;
+  nextPage: number | null;
+}
+
+interface Amenity {
+  name: string;
+  icon: string;
+}
+
+interface ApartmentDoc extends mongoose.Document {
+  _id: mongoose.Types.ObjectId;
+  title: string;
+  location: {
+    street: string;
+    ward: string;
+    district: string;
+    province: string;
+  };
+  price: number;
+  numberOfGuest: number;
+  quantity: number;
+  amenities: Amenity[];
+  rating: {
+    ratingAvg: number;
+    totalRating: number;
+  };
+}
 export const apartmentService = {
   async getAllApartments() {
     const [err, apartments] = await to(
@@ -37,116 +76,15 @@ export const apartmentService = {
     return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
 
-  async getApartmentDetail(apartmentId: string, query: any) {
+  async getApartmentDetail(apartmentId: string, query: GetApartmentQuery['query']) {
     const { startDate, endDate, numberOfGuest, roomNumber, minPrice, maxPrice } = query;
 
-    const startDay = startDate ? new Date(startDate) : null;
-    const endDay = endDate ? new Date(endDate) : null;
-    const today = new Date(Date.now());
-
-    if ((startDay && startDay < today) || (endDay && endDay < today)) {
-      return new ServiceResponse(ResponseStatus.Failed, 'Invalid start or end date', null, StatusCodes.BAD_REQUEST);
-    }
-
-    const [err, apartment] = await to(
-      ApartmentModel.aggregate([
-        { $match: { _id: new mongoose.Types.ObjectId(apartmentId) } },
-        {
-          $lookup: {
-            from: 'rooms',
-            localField: '_id',
-            foreignField: 'apartmentId',
-            as: 'rooms',
-          },
-        },
-        { $unwind: '$rooms' },
-        {
-          $match: {
-            'rooms.numberOfGuest': { $gte: numberOfGuest },
-            'rooms.quantity': { $gte: roomNumber },
-            $or: [
-              { 'rooms.unavailableDateRanges': null },
-              {
-                'rooms.unavailableDateRanges': {
-                  $not: {
-                    $elemMatch: {
-                      startDay: { $lt: endDay },
-                      endDay: { $gt: startDay },
-                    },
-                  },
-                },
-              },
-            ],
-            'rooms.price': { $gte: minPrice, $lte: maxPrice },
-          },
-        },
-        {
-          $lookup: {
-            from: 'services',
-            localField: 'rooms.services',
-            foreignField: '_id',
-            as: 'rooms.services',
-          },
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'createBy',
-            foreignField: '_id',
-            as: 'createBy',
-          },
-        },
-        { $unwind: '$createBy' },
-        {
-          $group: {
-            _id: '$_id',
-            title: { $first: '$title' },
-            location: { $first: '$location' },
-            createBy: { $first: '$createBy' },
-            rooms: {
-              $push: {
-                $mergeObjects: [
-                  '$rooms',
-                  {
-                    services: {
-                      $map: {
-                        input: '$rooms.services',
-                        as: 'service',
-                        in: {
-                          title: '$$service.title',
-                          image: '$$service.image',
-                        },
-                      },
-                    },
-                    images: {
-                      $map: {
-                        input: '$rooms.images',
-                        as: 'image',
-                        in: {
-                          $concat: [`${process.env.SERVER_URL}/api/image/`, '$$image'],
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            title: 1,
-            location: 1,
-            'createBy._id': 1,
-            'createBy.firstname': 1,
-            'createBy.lastname': 1,
-            'createBy.avatar': 1,
-            rooms: 1,
-          },
-        },
-        { $limit: 1 },
-      ]).exec()
+    const [err, apartment] = await to<Apartment | null>(
+      ApartmentModel.findById(apartmentId)
+        .populate({ path: 'owner', select: 'firstname lastname email avatar' })
+        .select('-__v')
+        .lean()
+        .exec()
     );
 
     if (err) {
@@ -158,31 +96,83 @@ export const apartmentService = {
       );
     }
 
-    if (!apartment || !apartment[0]) {
+    if (!apartment) {
       return new ServiceResponse(ResponseStatus.Failed, 'Apartment not found', null, StatusCodes.NOT_FOUND);
     }
+
+    const roomsQuery = {
+      apartmentId,
+      numberOfGuest: { $gte: numberOfGuest },
+      quantity: { $gte: roomNumber },
+      price: { $gte: minPrice, $lte: maxPrice },
+      $or: [
+        { unavailableDateRanges: { $exists: false } },
+        {
+          unavailableDateRanges: {
+            $not: {
+              $elemMatch: {
+                startDay: { $lt: endDate },
+                endDay: { $gt: startDate },
+              },
+            },
+          },
+        },
+      ],
+    };
+
+    const [roomErr, rooms] = await to<Room[]>(
+      RoomModel.find(roomsQuery)
+        .populate({ path: 'amenities', select: 'name icon' })
+        .select('-apartmentId -__v -unavailableDateRanges')
+        .lean()
+        .exec()
+    );
+
+    if (roomErr) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'Error retrieving rooms',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    const transformedRooms = rooms.map((room) => {
+      const images = room.images.map((image: string) => `${SERVER_URL}/api/image/${image}`);
+      const amenities = room.amenities.map((amenity: any) => ({
+        name: amenity.name,
+        icon: `${SERVER_URL}/api/image/${amenity.icon}`,
+      }));
+      const nights = Math.max(moment(endDate).diff(moment(startDate), 'days'), 1);
+      const totalPrice = nights * room.price;
+      return { ...room, images, amenities, totalPrice };
+    });
+    const apartmentWithRooms = {
+      ...apartment,
+      rooms: transformedRooms,
+    };
 
     return new ServiceResponse(
       ResponseStatus.Success,
       'Apartment retrieved successfully',
-      apartment[0],
+      apartmentWithRooms,
       StatusCodes.OK
     );
   },
 
-  async createApartment(
-    createBy: string,
-    title: string,
-    description: string,
-    location: Location,
-    rooms: CreateRoom[],
-    houseRules?: string[],
-    checkInTime?: string,
-    checkOutTime?: string,
-    safetyInfo?: string[],
-    cancellationPolicy?: string[],
-    discounts?: string[]
-  ) {
+  async createApartment(createBy: string, body: any) {
+    const {
+      title,
+      description,
+      location,
+      rooms,
+      houseRules,
+      checkInTime,
+      checkOutTime,
+      safetyInfo,
+      cancellationPolicy,
+      discounts,
+    } = body;
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -264,7 +254,7 @@ export const apartmentService = {
       await session.commitTransaction();
       session.endSession();
 
-      const populatedRooms = await Room.find({ _id: { $in: roomIds } }).populate('amenities');
+      const populatedRooms = await RoomModel.find({ _id: { $in: roomIds } }).populate('amenities');
 
       const response = {
         ...newApartment[0].toObject(),
@@ -273,11 +263,8 @@ export const apartmentService = {
 
       return new ServiceResponse(ResponseStatus.Success, 'Apartment created successfully', response, StatusCodes.OK);
     } catch (error) {
-      console.log('createApartment error: %s', error);
       try {
         await session.abortTransaction();
-      } catch (abortError) {
-        console.error('Error aborting transaction:', abortError);
       } finally {
         session.endSession();
       }
@@ -319,10 +306,11 @@ export const apartmentService = {
           },
         },
       },
-      price: { $gte: minPrice || 0, $lte: maxPrice },
+      price: { $gte: minPrice, $lte: maxPrice },
     };
-
-    const [roomError, rooms] = await to(Room.find(roomQuery).populate('amenities').exec());
+    const nights = moment(endDate).diff(moment(startDate), 'days');
+    const totalNights = nights > 0 ? nights : 1;
+    const [roomError, rooms] = await to(RoomModel.find(roomQuery).exec());
     if (roomError) {
       return new ServiceResponse(
         ResponseStatus.Failed,
@@ -346,94 +334,107 @@ export const apartmentService = {
     const queryObj = {
       'rooms.price': { $gte: minPrice, $lte: maxPrice },
     };
-    const [error, aggregateResult] = await to(
-      ApartmentModel.aggregate([
-        initialMatch,
-        {
-          $facet: {
-            paginatedResult: [
-              {
-                $lookup: {
-                  from: 'rooms',
-                  localField: '_id',
-                  foreignField: 'apartmentId',
-                  as: 'rooms',
-                },
-              },
-              { $unwind: '$rooms' },
-              { $match: queryObj },
-              {
-                $group: {
-                  _id: '$_id',
-                  roomPriceMin: { $min: '$rooms.price' },
-                  roomId: { $first: '$rooms._id' },
-                  title: { $first: '$title' },
-                  location: { $first: '$location' },
-                  numberOfGuest: { $first: '$rooms.numberOfGuest' },
-                  quantity: { $first: '$rooms.quantity' },
-                  reviews: { $first: '$rooms.reviews' },
-                  images: { $first: '$rooms.images' },
-                  amenities: { $first: '$rooms.amenities' },
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                  roomId: 1,
-                  name: '$title',
-                  address: {
-                    street: '$location.street',
-                    ward: '$location.ward',
-                    district: '$location.district',
-                    province: '$location.province',
-                  },
-                  image: {
-                    $concat: [
-                      `${process.env.SERVER_URL}/api/image/`,
-                      { $arrayElemAt: [{ $ifNull: ['$images', []] }, 0] },
-                    ],
-                  },
-                  price: '$roomPriceMin',
-                  numberOfGuest: 1,
-                  quantity: 1,
-                  amenities: {
-                    $slice: ['$amenities.name', 3],
-                  },
-                  rating: {
-                    ratingAvg: {
-                      $cond: {
-                        if: { $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0] },
-                        then: { $avg: '$reviews.score' },
-                        else: 0,
-                      },
-                    },
-                    totalRating: {
-                      $cond: {
-                        if: { $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0] },
-                        then: { $sum: '$reviews.score' },
-                        else: 0,
-                      },
-                    },
+
+    const aggregation = [
+      initialMatch,
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: '_id',
+          foreignField: 'apartmentId',
+          as: 'rooms',
+        },
+      },
+      { $unwind: '$rooms' },
+      { $match: queryObj },
+      {
+        $lookup: {
+          from: 'amenities',
+          localField: 'rooms.amenities',
+          foreignField: '_id',
+          as: 'rooms.amenities',
+        },
+      },
+
+      {
+        $group: {
+          _id: '$_id',
+          roomPriceMin: { $min: '$rooms.price' },
+          roomId: { $first: '$rooms._id' },
+          title: { $first: '$title' },
+          location: { $first: '$location' },
+          numberOfGuest: { $first: '$rooms.numberOfGuest' },
+          quantity: { $first: '$rooms.quantity' },
+          reviews: { $first: '$rooms.reviews' },
+          images: { $first: '$rooms.images' },
+          amenities: {
+            $first: {
+              $map: {
+                input: '$rooms.amenities',
+                as: 'amenity',
+                in: {
+                  name: '$$amenity.name',
+                  icon: {
+                    $concat: [`${SERVER_URL}/api/image/`, '$$amenity.icon'],
                   },
                 },
               },
-              { $skip: (page - 1) * limit },
-              { $limit: limit },
-            ],
-            totalCount: [
-              { $unwind: '$rooms' },
-              { $match: queryObj },
-              {
-                $group: {
-                  _id: '$_id',
-                  roomPriceMin: { $min: '$rooms.price' },
-                },
-              },
-              { $count: 'totalCount' },
-            ],
+            },
           },
         },
-      ]).exec()
+      },
+      {
+        $addFields: {
+          nights: totalNights,
+          totalPrice: { $multiply: ['$roomPriceMin', totalNights] },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          roomId: 1,
+          name: '$title',
+          address: {
+            street: '$location.street',
+            ward: '$location.ward',
+            district: '$location.district',
+            province: '$location.province',
+          },
+          image: {
+            $concat: [`${SERVER_URL}/api/image/`, { $arrayElemAt: [{ $ifNull: ['$images', []] }, 0] }],
+          },
+          price: '$roomPriceMin',
+          numberOfGuest: 1,
+          quantity: 1,
+          amenities: { $slice: ['$amenities', 6] },
+          rating: {
+            ratingAvg: {
+              $cond: {
+                if: { $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0] },
+                then: { $avg: '$reviews.score' },
+                else: 0,
+              },
+            },
+            totalRating: {
+              $cond: {
+                if: { $gt: [{ $size: { $ifNull: ['$reviews', []] } }, 0] },
+                then: { $sum: '$reviews.score' },
+                else: 0,
+              },
+            },
+          },
+          nights: 1,
+          totalPrice: 1,
+        },
+      },
+    ];
+
+    const options = {
+      page: page || 1,
+      limit: limit || 10,
+    };
+    const [error, result] = await to<PaginatedResult<ApartmentDoc>>(
+      (ApartmentModel as any).aggregatePaginate(ApartmentModel.aggregate(aggregation), options)
     );
     if (error) {
       return new ServiceResponse(
@@ -444,17 +445,14 @@ export const apartmentService = {
       );
     }
 
-    const { paginatedResult, totalCount } = aggregateResult[0];
-    const totalResults = totalCount.length > 0 ? totalCount[0].totalCount : 0;
-
     return new ServiceResponse(
       ResponseStatus.Success,
       'Apartments retrieved successfully',
       {
-        page,
-        pageResults: paginatedResult.length,
-        totalResults,
-        apartments: paginatedResult,
+        page: result.page,
+        pageResults: result.docs.length,
+        totalResults: result.totalDocs,
+        apartments: result.docs,
       },
       StatusCodes.OK
     );
@@ -682,7 +680,7 @@ export const apartmentService = {
       { $limit: 1 },
     ];
 
-    const result = await Room.aggregate(pipeline).exec();
+    const result = await RoomModel.aggregate(pipeline).exec();
 
     if (!result || result.length === 0) {
       return new ServiceResponse(ResponseStatus.Failed, 'Room not found or unavailable', null, StatusCodes.NOT_FOUND);

@@ -11,7 +11,7 @@ import {
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const CalendarPage: React.FC = () => {
    const [value, setValue] = useState(() => dayjs());
@@ -47,7 +47,9 @@ const CalendarPage: React.FC = () => {
             className="font-main text-lg"
          />
          <Drawer
-            title={`Set Values for ${selectedValue ? selectedValue.format('MMMM Do YYYY') : ''}`}
+            title={`Set Values for ${
+               selectedValue ? selectedValue.format('MMMM Do YYYY') : ''
+            }`}
             placement="right"
             onClose={onClose}
             open={visible}

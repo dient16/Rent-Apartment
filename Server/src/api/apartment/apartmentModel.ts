@@ -1,5 +1,5 @@
-import type { Document } from 'mongoose';
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
+import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 import type { Apartment } from './apartmentSchema';
 
@@ -21,8 +21,8 @@ const apartmentSchema = new Schema(
       required: true,
     },
     rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
-    images: [{ type: String, required: true }],
-    houseRules: [{ type: String }],
+    images: [{ type: String }],
+    houserules: [{ type: String }],
     checkInTime: { type: String },
     checkOutTime: { type: String },
     safetyInfo: [{ type: String }],
@@ -32,12 +32,7 @@ const apartmentSchema = new Schema(
   { timestamps: true }
 );
 
-apartmentSchema.index({
-  'location.province': 'text',
-  'location.district': 'text',
-  'location.ward': 'text',
-  'location.street': 'text',
-});
+apartmentSchema.plugin(aggregatePaginate);
 
 const ApartmentModel = mongoose.model<Apartment & Document>('Apartment', apartmentSchema, 'apartments');
 
