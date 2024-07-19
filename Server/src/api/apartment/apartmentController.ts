@@ -15,7 +15,15 @@ export const getAllApartment = async (_req: Request, res: Response, next: NextFu
     next(error);
   }
 };
-
+export const getPopularRooms = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const serviceResponse = await apartmentService.getPopularRooms(limit);
+    handleServiceResponse(serviceResponse, res);
+  } catch (error) {
+    next(error);
+  }
+};
 export const getApartmentDetail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { apartmentId } = req.params;
@@ -42,6 +50,7 @@ export const searchApartments = async (req: SearchRoomType & Request, res: Respo
   try {
     const { startDate, endDate } = req.query;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     if (new Date(startDate) < today || new Date(endDate) < today) {
       return handleServiceResponse(
@@ -54,6 +63,7 @@ export const searchApartments = async (req: SearchRoomType & Request, res: Respo
         res
       );
     }
+
     const serviceResponse = await apartmentService.searchApartments(req.query);
     handleServiceResponse(serviceResponse, res);
   } catch (error) {

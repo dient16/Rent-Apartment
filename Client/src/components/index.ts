@@ -23,3 +23,5 @@ export { default as SearchSection } from './SearchResult/SearchSection';
 export { default as FilterSection } from './SearchResult/FilterSection';
 export { default as SummaryCard } from './SearchResult/SummaryCard';
 export { default as CustomDatePicker } from './CustomDatePicker/CustomDatePicker';
+export { default as AutoCompleteAddress } from './AutoCompleteAddress/AutoCompleteAddress';
+export { default as ApartmentPopular } from './ApartmentPopular/ApartmentPopular';

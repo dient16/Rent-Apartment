@@ -66,6 +66,30 @@ apartmentRegistry.registerPath({
   tags: ['Apartment'],
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
+apartmentRegistry.registerPath({
+  method: 'get',
+  path: '/api/apartment/popular-rooms',
+  tags: ['Apartment'],
+  responses: createApiResponse(
+    z.array(
+      z.object({
+        roomId: z.string(),
+        roomType: z.string(),
+        price: z.number(),
+        images: z.array(z.string()),
+        title: z.string(),
+        location: z.object({
+          province: z.string(),
+          district: z.string(),
+        }),
+      })
+    ),
+    'Success'
+  ),
+});
+
+router.get('/popular-rooms', controller.getPopularRooms);
+export default router;
 
 router.get('/by-user', verifyAccessToken, controller.getApartmentsByUserId);
 
@@ -162,5 +186,3 @@ apartmentRegistry.registerPath({
 });
 
 router.post('/create-stripe-payment', controller.createStripePayment);
-
-export default router;

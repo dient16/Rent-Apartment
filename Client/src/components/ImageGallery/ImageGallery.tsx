@@ -51,7 +51,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
             </Button>
          </div>
          <div className="lg:hidden mt-10">
-            <Carousel arrows={true}>
+            <Carousel arrows={true} swipeToSlide draggable>
                {images.map((image, index) => (
                   <div key={index} className="w-full h-[250px] md:h-[400px]">
                      <Image
