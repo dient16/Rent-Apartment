@@ -7,9 +7,7 @@
 .list-image-room .ant-image-mask-info {
    display: none;
 }
-.search-home > .ant-picker.ant-picker-range {
-   box-shadow: none;
-}
+
 .navLink::before {
    content: '';
    position: absolute;

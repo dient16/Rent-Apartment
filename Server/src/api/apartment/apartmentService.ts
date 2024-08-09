@@ -75,7 +75,70 @@ export const apartmentService = {
 
     return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
+  async getPopularRooms(limit: number = 10) {
+    const [err, rooms] = await to(
+      RoomModel.aggregate([
+        {
+          $sort: { price: -1, size: -1 },
+        },
+        {
+          $lookup: {
+            from: 'apartments',
+            localField: 'apartmentId',
+            foreignField: '_id',
+            as: 'apartment',
+          },
+        },
+        {
+          $unwind: '$apartment',
+        },
+        {
+          $group: {
+            _id: '$apartment._id',
+            roomId: { $first: '$_id' },
+            roomType: { $first: '$roomType' },
+            price: { $first: '$price' },
+            images: { $first: '$images' },
+            title: { $first: '$apartment.title' },
+            location: { $first: '$apartment.location' },
+            avgRating: { $avg: '$reviews.score' },
+          },
+        },
+        {
+          $project: {
+            roomId: 1,
+            roomType: 1,
+            price: 1,
+            images: {
+              $map: {
+                input: '$images',
+                as: 'image',
+                in: { $concat: [`${SERVER_URL}/api/image/`, '$$image'] },
+              },
+            },
+            title: 1,
+            'location.province': 1,
+            'location.district': 1,
+            avgRating: { $ifNull: ['$avgRating', 0] },
+          },
+        },
+        {
+          $limit: limit,
+        },
+      ]).exec()
+    );
 
+    if (err) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'Error fetching popular rooms',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    return new ServiceResponse(ResponseStatus.Success, 'Popular rooms retrieved successfully', rooms, StatusCodes.OK);
+  },
   async getApartmentDetail(apartmentId: string, query: GetApartmentQuery['query']) {
     const { startDate, endDate, numberOfGuest, roomNumber, minPrice, maxPrice } = query;
 

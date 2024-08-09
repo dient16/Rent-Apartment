@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { DateRangePicker, Range, RangeKeyDict } from 'react-date-range';
-import { Button, Dropdown, Drawer } from 'antd';
+import { Button, Drawer, Popover } from 'antd';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import moment from 'moment';
 import { DownOutlined, CalendarOutlined } from '@ant-design/icons';
+import { useMediaQuery } from 'react-responsive';
+import { HiOutlineArrowLongRight } from 'react-icons/hi2';
 
 interface CustomDatePickerProps {
    value: [Date, Date];
    onChange: (value: [Date, Date]) => void;
+   disabledDates?: Date[];
+   minDate?: Date;
    className?: string;
    isShowLeftIcon?: boolean;
    isShowRightIcon?: boolean;
    isShowNight?: boolean;
+   variant?: 'label' | 'button';
    format?: string;
 }
 
@@ -20,19 +25,40 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
    value,
    onChange,
    className,
+   disabledDates = [],
+   minDate,
    isShowLeftIcon = true,
    isShowRightIcon = true,
    isShowNight = true,
    format = 'DD MMM',
+   variant = 'button',
 }) => {
    const [drawerVisible, setDrawerVisible] = useState(false);
+   const [popoverVisible, setPopoverVisible] = useState(false);
    const [dates, setDates] = useState<[Date, Date]>(value);
+   const [selectingEndDate, setSelectingEndDate] = useState(false);
+   const isMobileOrTablet = useMediaQuery({ query: '(max-width: 768px)' });
+   const isMobile = useMediaQuery({ query: '(max-width: 440px)' });
 
    const handleDateChange = (ranges: RangeKeyDict) => {
       const selection = ranges.selection as Range;
       const newStartDate = selection.startDate as Date;
       const newEndDate = selection.endDate as Date;
+
       setDates([newStartDate, newEndDate]);
+      if (
+         !selectingEndDate &&
+         newStartDate &&
+         (!dates[1] || newEndDate !== dates[1])
+      ) {
+         setSelectingEndDate(true);
+      } else if (newEndDate) {
+         setSelectingEndDate(false);
+         if (!isMobileOrTablet) {
+            onChange([newStartDate, newEndDate]);
+            setPopoverVisible(false);
+         }
+      }
    };
 
    const handleConfirm = () => {
@@ -45,7 +71,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
    };
 
    const dateRangePicker = (
-      <div className="h-full flex flex-col justify-between">
+      <div className="h-full flex flex-col justify-between items-center">
          <DateRangePicker
             ranges={[
                {
@@ -56,13 +82,15 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             ]}
             onChange={handleDateChange}
             moveRangeOnFirstSelection={false}
-            months={window.innerWidth <= 425 ? 1 : 2}
+            months={isMobile ? 1 : 2}
             direction="horizontal"
             className="custom-datepicker"
             staticRanges={[]}
             inputRanges={[]}
+            disabledDates={disabledDates}
+            minDate={minDate}
          />
-         <div className="flex justify-between items-center mt-4 pt-5 border-t bg-white">
+         <div className="flex justify-between items-center mt-4 pt-5 border-t bg-white lg:hidden px-2 pb-5 sm:p-5 w-full">
             <div className="flex flex-col">
                <span className="text-sm text-gray-500">Check-in</span>
                <span className="text-blue-600">
@@ -86,23 +114,78 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       </div>
    );
 
+   const renderButtonContent = () => (
+      <>
+         {variant === 'button' && (
+            <Button
+               className={`my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px] ${className}`}
+               onClick={() => {
+                  isMobileOrTablet
+                     ? setDrawerVisible(true)
+                     : setPopoverVisible(true);
+               }}
+            >
+               {isShowLeftIcon && <CalendarOutlined className="mr-2" />}
+               {moment(value[0]).format(format)}
+               <HiOutlineArrowLongRight />
+               {moment(value[1]).format(format)}
+               {isShowNight
+                  ? `, ${getNightCount(value[0], value[1])} nights`
+                  : ''}
+               {isShowRightIcon && <DownOutlined className="ml-2" />}
+            </Button>
+         )}
+         {variant === 'label' && (
+            <div className="flex items-end ml-3 text-base font-medium gap-3 max-w-[280px] w-full justify-between">
+               <div>
+                  <div>Check-in</div>
+                  <div
+                     className="text-lg font-normal cursor-pointer"
+                     onClick={() => {
+                        isMobileOrTablet
+                           ? setDrawerVisible(true)
+                           : setPopoverVisible(true);
+                     }}
+                  >
+                     {!dates[0] ? (
+                        <div className="text-gray-400">Add date</div>
+                     ) : (
+                        <div>{moment(value[0]).format(format)}</div>
+                     )}
+                  </div>
+               </div>
+               <div className="pb-1">
+                  <HiOutlineArrowLongRight />
+               </div>
+               <div>
+                  <div>Check-out</div>
+                  <div
+                     className="text-lg font-normal cursor-pointer"
+                     onClick={() => {
+                        isMobileOrTablet
+                           ? setDrawerVisible(true)
+                           : setPopoverVisible(true);
+                     }}
+                  >
+                     {!dates[1] ? (
+                        <div className="text-gray-400">Add date</div>
+                     ) : (
+                        <div>{moment(value[1]).format(format)}</div>
+                     )}
+                  </div>
+               </div>
+            </div>
+         )}
+      </>
+   );
+
+   const content = <div>{dateRangePicker}</div>;
+
    return (
       <>
          <div className="block lg:hidden">
-            <Button
-               className={`my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px] ${className}`}
-               onClick={() => setDrawerVisible(true)}
-            >
-               {isShowLeftIcon && <CalendarOutlined className="mr-2" />}
-               {`${moment(value[0]).format(format)} - ${moment(value[1]).format(
-                  format,
-               )}${
-                  isShowNight
-                     ? `, ${getNightCount(value[0], value[1])} nights`
-                     : ''
-               }`}
-               {isShowRightIcon && <DownOutlined className="ml-2" />}
-            </Button>
+            {renderButtonContent()}
+
             <Drawer
                title="Select Dates"
                placement="bottom"
@@ -115,25 +198,16 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             </Drawer>
          </div>
          <div className="hidden lg:block">
-            <Dropdown
-               dropdownRender={() => dateRangePicker}
-               trigger={['click']}
-               placement="bottomLeft"
+            <Popover
+               content={content}
+               trigger="click"
+               placement="bottom"
+               overlayClassName="custom-popover"
+               open={popoverVisible}
+               onOpenChange={setPopoverVisible}
             >
-               <Button
-                  className={`my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px] ${className}`}
-               >
-                  {isShowLeftIcon && <CalendarOutlined className="mr-2" />}
-                  {`${moment(value[0]).format(format)} - ${moment(
-                     value[1],
-                  ).format(format)}${
-                     isShowNight
-                        ? `, ${getNightCount(value[0], value[1])} nights`
-                        : ''
-                  }`}
-                  {isShowRightIcon && <DownOutlined className="ml-2" />}
-               </Button>
-            </Dropdown>
+               {renderButtonContent()}
+            </Popover>
          </div>
       </>
    );

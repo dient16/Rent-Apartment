@@ -134,8 +134,8 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                </div>
             </div>
          </div>
-         <div className="fixed bottom-0 z-50 left-0 right-0 px-4 py-2 bg-white border-t-2 xl:hidden">
-            <div className="flex justify-between items-center mt-3">
+         <div className="fixed bottom-0 z-50 left-0 right-0 px-4 py-1 bg-white border-t-2 xl:hidden">
+            <div className="flex justify-between items-center mt-1">
                <div>
                   <span className="block text-lg font-medium">
                      {finalAmount.toLocaleString()} VND

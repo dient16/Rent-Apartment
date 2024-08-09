@@ -45,3 +45,8 @@ export const apiGetApartmentByUser = (): Promise<Res> =>
       url: `/apartment/by-user`,
       method: 'get',
    });
+export const apiGetApartmentPopular = (): Promise<Res> =>
+   axios({
+      url: `/apartment/popular-rooms`,
+      method: 'get',
+   });

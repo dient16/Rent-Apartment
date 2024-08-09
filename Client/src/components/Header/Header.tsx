@@ -180,7 +180,7 @@ const Header: React.FC = () => {
             closeIcon={null}
          >
             <div
-               className="flex flex-col gap-5 select-none"
+               className="flex flex-col gap-5 select-none p-5"
                onClick={() => setOpenNavigate(false)}
             >
                <Flex gap={20} vertical>
