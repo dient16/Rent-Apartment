@@ -54,3 +54,12 @@ export const deleteRoom = async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 };
+export const getRoomsByApartmentId = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { apartmentId } = req.params;
+    const serviceResponse = await roomService.getRoomsByApartmentId(apartmentId);
+    handleServiceResponse(serviceResponse, res);
+  } catch (error) {
+    next(error);
+  }
+};

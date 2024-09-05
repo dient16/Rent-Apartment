@@ -6,59 +6,117 @@ import mongoose from 'mongoose';
 
 import Apartment from '@/api/apartment/apartmentModel';
 import User, { User as IUser } from '@/api/user/userModel';
-import { ServiceResponse } from '@/common/serviceResponse/serviceResponse';
+import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
 import { sendMail } from '@/common/utils/helpers';
 
 import Booking, { IBooking } from './bookingModel';
+import RoomModel from '../room/roomModel';
+import BookingModel from './bookingModel';
+import { env } from '@/common/utils/envConfig';
+import ApartmentModel from '@/api/apartment/apartmentModel';
+const { SERVER_URL } = env;
+
+const getUserBookings = async (userId: string) => {
+  try {
+    // Step 1: Find all apartments owned by the user
+    const apartments = await ApartmentModel.find({ owner: userId }).exec();
+    if (!apartments.length) {
+      return new ServiceResponse(ResponseStatus.Success, 'No bookings found', [], StatusCodes.OK);
+    }
+
+    // Step 2: Find all rooms in those apartments
+    const rooms = await RoomModel.find({ apartmentId: { $in: apartments.map((apartment) => apartment._id) } }).exec();
+
+    // Step 3: Find all bookings related to those rooms
+    const bookings = await BookingModel.find({
+      'rooms.roomId': { $in: rooms.map((room) => room._id) },
+    }).exec();
+
+    return new ServiceResponse(ResponseStatus.Success, 'Bookings retrieved successfully', bookings, StatusCodes.OK);
+  } catch (error) {
+    console.error('Error retrieving user bookings:', error);
+    return new ServiceResponse(
+      ResponseStatus.Failed,
+      'Error retrieving bookings',
+      null,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
 
 const createBooking = async (bookingData: Partial<IBooking>): Promise<ServiceResponse<IBooking>> => {
-  const { email, firstname, lastname, roomId, checkInTime, checkOutTime, totalPrice, arrivalTime, phone } = bookingData;
+  const { email, firstname, lastname, phone, arrivalTime, checkInTime, checkOutTime, totalPrice, rooms } = bookingData;
 
-  if (!email || !roomId || !checkInTime || !checkOutTime || !totalPrice) {
-    return new ServiceResponse(StatusCodes.BAD_REQUEST, 'Missing required fields', null);
+  if (!email || !rooms || rooms.length === 0 || !totalPrice || !checkInTime || !checkOutTime) {
+    return new ServiceResponse(ResponseStatus.Failed, 'Missing required fields', null, StatusCodes.BAD_REQUEST);
   }
 
-  const [findError, apartment] = await to(
-    Apartment.findOne({
-      'rooms._id': new mongoose.Types.ObjectId(roomId),
-    }).exec()
-  );
+  for (const roomData of rooms) {
+    const { roomId } = roomData;
 
-  if (findError || !apartment) {
-    return new ServiceResponse(StatusCodes.NOT_FOUND, 'Room not found', null);
+    if (!roomId) {
+      return new ServiceResponse(ResponseStatus.Failed, 'Missing room ID', null, StatusCodes.BAD_REQUEST);
+    }
+
+    const [roomError, room] = await to(RoomModel.findById(roomId).exec());
+    if (roomError || !room) {
+      return new ServiceResponse(ResponseStatus.Failed, 'Room not found', null, StatusCodes.NOT_FOUND);
+    }
+
+    if (!room.isAvailable(checkInTime)) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        `Room ${roomId} is not available for the selected dates`,
+        null,
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    room.unavailableDateRanges.push({
+      startDay: checkInTime,
+      endDay: checkOutTime,
+    });
+
+    const [updateError] = await to(room.save());
+    if (updateError) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'Error updating room availability',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
-  const room = apartment.rooms.id(roomId);
-  room.unavailableDateRanges.push({
-    startDay: checkInTime,
-    endDay: checkOutTime,
-  });
-
-  const [updateError] = await to(apartment.save());
-  if (updateError) {
-    return new ServiceResponse(StatusCodes.INTERNAL_SERVER_ERROR, 'Error updating room availability', null);
-  }
-
-  const newBooking = new Booking({
+  const newBooking = new BookingModel({
     email,
     firstname,
     lastname,
-    room: roomId,
     phone,
     arrivalTime,
     checkInTime,
     checkOutTime,
     totalPrice,
+    status: 'pending',
+    rooms: bookingData.rooms.map((roomData: { roomId: string; roomNumber: number }) => ({
+      roomId: roomData.roomId,
+      roomNumber: roomData.roomNumber,
+    })),
   });
 
   const [saveError, savedBooking] = await to(newBooking.save());
   if (saveError) {
-    return new ServiceResponse(StatusCodes.INTERNAL_SERVER_ERROR, 'Error saving booking', null);
+    return new ServiceResponse(ResponseStatus.Failed, 'Error saving booking', null, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 
-  const [readError, htmlTemplate] = await to(fs.readFile('src/template/bookingConfirmationTemplate.html', 'utf-8'));
+  const [readError, htmlTemplate] = await to(fs.readFile('templates/bookingConfirmationTemplate.html', 'utf-8'));
   if (readError) {
-    return new ServiceResponse(StatusCodes.INTERNAL_SERVER_ERROR, 'Error reading email template', null);
+    return new ServiceResponse(
+      ResponseStatus.Failed,
+      'Error reading email template',
+      null,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 
   const htmlToSend = htmlTemplate
@@ -71,74 +129,176 @@ const createBooking = async (bookingData: Partial<IBooking>): Promise<ServiceRes
 
   const [mailError] = await to(sendMail({ email, html: htmlToSend, subject: 'Booking Confirmation' }));
   if (mailError) {
-    return new ServiceResponse(StatusCodes.INTERNAL_SERVER_ERROR, 'Error sending email', null);
+    return new ServiceResponse(ResponseStatus.Failed, 'Error sending email', null, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 
-  return new ServiceResponse(StatusCodes.CREATED, 'Booking successfully created', savedBooking);
+  return new ServiceResponse(ResponseStatus.Success, 'Booking successfully created', savedBooking, StatusCodes.CREATED);
 };
-
-const getBookings = async (userId: string): Promise<ServiceResponse<any[]>> => {
-  const [errFindUser, user] = await to(User.findById(userId).exec());
+const getBookings = async (userId: string): Promise<ServiceResponse> => {
+  const [errFindUser, user] = await to(User.findById(userId).lean().exec());
   if (errFindUser || !user) {
-    return new ServiceResponse(StatusCodes.NOT_FOUND, 'User not found', null);
+    return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
   }
 
-  const [err, bookings] = await to(Booking.find({ email: user.email }).exec());
-  if (err) {
-    return new ServiceResponse(StatusCodes.INTERNAL_SERVER_ERROR, 'Error finding bookings', null);
-  }
-
-  const bookingDetails = await Promise.all(
-    bookings.map(async (booking) => {
-      const apartment = await Apartment.findOne({
-        'rooms._id': booking.room,
-      }).exec();
-      const room = apartment.rooms.id(booking.room);
-      return {
-        _id: booking._id,
-        name: apartment.title,
-        image: `${process.env.SERVER_URI}/api/image/${room.images[0]}`,
-        checkIn: booking.checkInTime,
-        checkOut: booking.checkOutTime,
-        totalPrice: booking.totalPrice,
-      };
-    })
+  const [errFindBookings, bookings] = await to(
+    BookingModel.find({ email: user.email })
+      .populate({
+        path: 'rooms.roomId',
+        select: 'roomType price amenities size images',
+        model: RoomModel,
+      })
+      .lean()
+      .exec()
   );
 
-  return new ServiceResponse(StatusCodes.OK, 'Bookings retrieved successfully', bookingDetails);
+  if (errFindBookings) {
+    return new ServiceResponse(
+      ResponseStatus.Failed,
+      'Error finding bookings',
+      null,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  const filteredBookingDetails = bookings.map((booking) => ({
+    _id: booking._id,
+    email: booking.email,
+    firstname: booking.firstname,
+    lastname: booking.lastname,
+    phone: booking.phone,
+    rooms: booking.rooms.map((room) => ({
+      roomId: room.roomId._id,
+      roomType: room.roomId.roomType,
+      roomNumber: room.roomNumber,
+      price: room.roomId.price,
+      size: room.roomId.size,
+      image: `${SERVER_URL}/api/image/${room.roomId.images[0]}`,
+    })),
+    arrivalTime: booking.arrivalTime,
+    checkInTime: booking.checkInTime,
+    checkOutTime: booking.checkOutTime,
+    totalPrice: booking.totalPrice,
+    status: booking.status,
+  }));
+
+  return new ServiceResponse(
+    ResponseStatus.Success,
+    'Bookings retrieved successfully',
+    filteredBookingDetails,
+    StatusCodes.OK
+  );
 };
 
 const getBooking = async (bookingId: string): Promise<ServiceResponse<any>> => {
-  const [err, booking] = await to(Booking.findById(bookingId).exec());
+  const [err, booking] = await to(
+    BookingModel.findById(bookingId)
+      .populate({
+        path: 'rooms.roomId',
+        select: 'apartmentId roomType images size price bedType',
+      })
+      .lean()
+      .exec()
+  );
+
   if (err || !booking) {
-    return new ServiceResponse(StatusCodes.NOT_FOUND, 'Booking not found', null);
+    return new ServiceResponse(ResponseStatus.Failed, 'Booking not found', null, StatusCodes.NOT_FOUND);
   }
 
-  const apartment = await Apartment.findOne({ 'rooms._id': booking.room })
-    .populate({ path: 'createBy', select: 'phone email' })
-    .exec();
-  if (!apartment) {
-    return new ServiceResponse(StatusCodes.NOT_FOUND, 'Apartment not found', null);
-  }
+  const apartmentIds = booking.rooms.map((room) => room.roomId.apartmentId);
+  const uniqueApartmentIds = [...new Set(apartmentIds)];
 
-  const room = apartment.rooms.id(booking.room);
+  const [errApartments, apartments] = await to(
+    ApartmentModel.find({ _id: { $in: uniqueApartmentIds } })
+      .populate({ path: 'owner', select: 'phone email' })
+      .lean()
+      .exec()
+  );
+
+  if (errApartments || apartments.length === 0) {
+    return new ServiceResponse(ResponseStatus.Failed, 'Apartments not found', null, StatusCodes.NOT_FOUND);
+  }
+  const apartment = apartments.find((ap) => ap._id.toString() === booking.rooms[0].roomId.apartmentId.toString());
   const bookingDetails = {
     _id: booking._id,
-    name: apartment.title,
-    address: apartment.location,
-    image: `${process.env.SERVER_URL}/api/image/${room.images[0]}`,
     checkIn: booking.checkInTime,
     checkOut: booking.checkOutTime,
     totalPrice: booking.totalPrice,
-    roomType: room.roomType,
-    contact: apartment.createBy,
+    apartmentName: apartment ? apartment.title : 'Unknown',
+    address: apartment ? apartment.location : {},
+    contact: apartment ? apartment.owner : {},
+    rooms: booking.rooms.map((room) => {
+      return {
+        roomId: room.roomId._id,
+        roomType: room.roomId.roomType,
+        roomNumber: room.roomNumber,
+        size: room.roomId.size,
+        price: room.roomId.price,
+        bedType: room.roomId.bedType,
+        images: room.roomId.images.map((image) => `${process.env.SERVER_URL}/api/image/${image}`),
+      };
+    }),
   };
 
-  return new ServiceResponse(StatusCodes.OK, 'Booking retrieved successfully', bookingDetails);
+  return new ServiceResponse(ResponseStatus.Success, 'Booking retrieved successfully', bookingDetails, StatusCodes.OK);
+};
+const confirmBooking = async (bookingId: string): Promise<ServiceResponse<IBooking>> => {
+  const [findError, booking] = await to(BookingModel.findById(bookingId).exec());
+  if (findError || !booking) {
+    return new ServiceResponse(ResponseStatus.Failed, 'Booking not found', null, StatusCodes.NOT_FOUND);
+  }
+
+  if (booking.status !== 'pending') {
+    return new ServiceResponse(
+      ResponseStatus.Failed,
+      'Booking is already confirmed or canceled',
+      null,
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  booking.status = 'confirmed';
+
+  const [updateError, updatedBooking] = await to(booking.save());
+  if (updateError) {
+    return new ServiceResponse(
+      ResponseStatus.Failed,
+      'Error updating booking status',
+      null,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  const [readError, htmlTemplate] = await to(fs.readFile('templates/bookingStatusConfirmationTemplate.html', 'utf-8'));
+
+  if (readError) {
+    return new ServiceResponse(
+      ResponseStatus.Failed,
+      'Error reading email template',
+      null,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+
+  const htmlToSend = htmlTemplate
+    .replace('{{firstname}}', booking.firstname)
+    .replace('{{lastname}}', booking.lastname)
+    .replace('{{bookingId}}', booking._id.toString())
+    .replace('{{checkInTime}}', booking.checkInTime.toString())
+    .replace('{{checkOutTime}}', booking.checkOutTime.toString())
+    .replace('{{totalPrice}}', `${booking.totalPrice.toLocaleString()} VND`);
+
+  const [mailError] = await to(sendMail({ email: booking.email, html: htmlToSend, subject: 'Booking Confirmed' }));
+  if (mailError) {
+    return new ServiceResponse(ResponseStatus.Failed, 'Error sending email', null, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+  return new ServiceResponse(ResponseStatus.Success, 'Booking successfully confirmed', updatedBooking, StatusCodes.OK);
 };
 
 export const bookingService = {
   createBooking,
   getBookings,
   getBooking,
+  getUserBookings,
+  confirmBooking,
 };

@@ -51,20 +51,24 @@ const ApartmentDetail: React.FC = () => {
          : 0;
 
    const selectedRooms = methods.watch('selectedRooms', []);
-
    const handleBooking = (data: any) => {
-      const queryParams = new URLSearchParams({
-         start_date: moment(data.searchDate[0]).format('YYYY-MM-DD'),
-         end_date: moment(data.searchDate[1]).format('YYYY-MM-DD'),
-         number_of_guest: numberOfGuest.toString(),
-         room_number: selectedRooms
-            .map((room: RoomValue) => room.count)
-            .reduce((a: number, b: number) => a + b, 0)
-            .toString(),
-         room_id: selectedRooms.map((room: RoomValue) => room.roomId).join(','),
+      const queryParams = new URLSearchParams();
+
+      selectedRooms.forEach((room: { roomId: string; count: number }) => {
+         queryParams.append('roomIds[]', room.roomId);
+         queryParams.append('roomNumbers[]', room.count.toString());
       });
 
-      navigate(`/${path.BOOKING_CONFIRM}?${queryParams}`);
+      queryParams.append(
+         'startDate',
+         moment(data.searchDate[0]).format('YYYY-MM-DD'),
+      );
+      queryParams.append(
+         'endDate',
+         moment(data.searchDate[1]).format('YYYY-MM-DD'),
+      );
+
+      navigate(`/${path.BOOKING_CONFIRM}?${queryParams.toString()}`);
    };
 
    const handleDateChange = (dates: [Date, Date]) => {
@@ -117,10 +121,10 @@ const ApartmentDetail: React.FC = () => {
                onSubmit={methods.handleSubmit(handleBooking)}
                className="flex flex-col gap-5 justify-center w-full max-w-main mx-auto px-5 lg:px-7"
             >
-               <ImageGallery images={apartment.rooms[0]?.images} />
-               <div className="flex gap-5 items-start mt-5">
+               <ImageGallery images={apartment?.rooms[0]?.images || []} />
+               <div className="flex gap-5 items-start lg:mt-5">
                   <div className="flex flex-col w-full">
-                     <div className="flex flex-col gap-2 justify-center mt-5 font-main">
+                     <div className="flex flex-col gap-2 justify-center lg:mt-5 mt-3 font-main">
                         <div className="text-3xl">{apartment?.title}</div>
                         <div className="flex gap-1 items-center text-sm font-light font-main">
                            <FaLocationDot color="#1640D6" size={15} />
@@ -130,7 +134,7 @@ const ApartmentDetail: React.FC = () => {
                         </div>
                      </div>
                      <NavigationBarRoom />
-                     <div className="mt-7">
+                     <div className="lg:mt-7 md:mt-4 mt-3">
                         <h3 id="overview" className="text-xl font-normal">
                            This place has something for you
                         </h3>
@@ -184,7 +188,7 @@ const ApartmentDetail: React.FC = () => {
                      numberOfDays={numberOfDays}
                   />
                </div>
-               <div className="relative z-0 my-5 w-full h-[500px] h-128">
+               <div className="relative z-0 my-5 w-full lg:h-[500px] h-[300px] h-128">
                   <h3 id="location" className="mb-5 ml-3 text-xl font-normal">
                      Where you will go
                   </h3>

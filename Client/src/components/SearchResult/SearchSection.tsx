@@ -118,7 +118,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({ searchParams }) => {
                         trigger={['click']}
                         getPopupContainer={(trigger) => trigger.parentElement!}
                      >
-                        <Button className="my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px]">
+                        <Button className="mb-4 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px]">
                            <PiUserThin size={25} />
                            <span className="">{`${
                               getValues('searchGuest')?.guests ?? 1

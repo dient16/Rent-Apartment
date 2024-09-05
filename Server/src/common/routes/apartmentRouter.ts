@@ -58,7 +58,7 @@ apartmentRegistry.registerPath({
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
 
-router.get('/room/:roomId', controller.findRoomById);
+router.get('/get-room-checkout', controller.getRoomsCheckout);
 
 apartmentRegistry.registerPath({
   method: 'get',
@@ -66,6 +66,7 @@ apartmentRegistry.registerPath({
   tags: ['Apartment'],
   responses: createApiResponse(apartmentSchema, 'Success'),
 });
+router.get('/by-user', verifyAccessToken, controller.getApartmentsByUserId);
 apartmentRegistry.registerPath({
   method: 'get',
   path: '/api/apartment/popular-rooms',
@@ -89,9 +90,6 @@ apartmentRegistry.registerPath({
 });
 
 router.get('/popular-rooms', controller.getPopularRooms);
-export default router;
-
-router.get('/by-user', verifyAccessToken, controller.getApartmentsByUserId);
 
 apartmentRegistry.registerPath({
   method: 'get',
@@ -186,3 +184,4 @@ apartmentRegistry.registerPath({
 });
 
 router.post('/create-stripe-payment', controller.createStripePayment);
+export default router;

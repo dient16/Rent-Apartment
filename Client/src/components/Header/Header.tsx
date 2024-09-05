@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import logo from '@/assets/logo.png';
-import { navigates, path } from '@/utils/constant';
+import { navigateHosts, navigates, path } from '@/utils/constant';
 import { MenuAccount, SignIn, SignUp } from '@/components';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -17,8 +17,10 @@ import type { TabsProps } from 'antd';
 import icons from '@/utils/icons';
 import { useAuth } from '@/hooks';
 import clsx from 'clsx';
-
-const Header: React.FC = () => {
+interface Props {
+   isHost?: boolean;
+}
+const Header: React.FC<Props> = ({ isHost = false }) => {
    const { SlClose, AiOutlineUsergroupAdd, PiSignInBold, CgMenuLeft, HiMenu } =
       icons;
    const navigate = useNavigate();
@@ -26,8 +28,8 @@ const Header: React.FC = () => {
    const {
       isAuthenticated,
       user: currentUser,
-      authModel,
-      setAuthModel,
+      authModal,
+      setAuthModal,
    } = useAuth();
    const tabItemsModal: TabsProps['items'] = [
       {
@@ -36,13 +38,13 @@ const Header: React.FC = () => {
             <div
                className="flex justify-center items-center text-xl font-main w-[120px] sm:w-[300px] md:w-[350px] lg:w-[390px]"
                onClick={() =>
-                  setAuthModel({ isOpen: true, activeTab: 'signin' })
+                  setAuthModal({ isOpen: true, activeTab: 'signin' })
                }
             >
                Sign In
             </div>
          ),
-         children: <SignIn setModalOpen={setAuthModel} />,
+         children: <SignIn setModalOpen={setAuthModal} />,
       },
       {
          key: 'signup',
@@ -50,7 +52,7 @@ const Header: React.FC = () => {
             <div
                className="flex justify-center items-center text-xl font-main w-[120px] sm:w-[300px] md:w-[350px] lg:w-[390px]"
                onClick={() =>
-                  setAuthModel({ isOpen: true, activeTab: 'signup' })
+                  setAuthModal({ isOpen: true, activeTab: 'signup' })
                }
             >
                Sign Up
@@ -60,7 +62,7 @@ const Header: React.FC = () => {
       },
    ];
    return (
-      <header className="flex sticky top-0 z-10 justify-center items-center w-full bg-white lg:h-[90px] h-[60px]">
+      <header className="flex sticky top-0 z-50 justify-center items-center w-full bg-white lg:h-[90px] h-[60px] shadow">
          <div className="flex justify-between px-3 w-full select-none md:px-10">
             <div className="lg:hidden" onClick={() => setOpenNavigate(true)}>
                <CgMenuLeft size={30} />
@@ -73,22 +75,26 @@ const Header: React.FC = () => {
             />
             <Flex gap={40} align="center">
                <div className="hidden lg:block">
-                  <Flex gap={15} align="center">
-                     {navigates.map((navigate, index) => (
-                        <NavLink
-                           key={index}
-                           to={navigate.path}
-                           className={({ isActive }) =>
-                              clsx(
-                                 'relative font-main text-[20px] font-medium text-black transition duration-500 ease-in-out',
-                                 isActive ? 'navLink-active text-blue-500' : '',
-                                 'navLink',
-                              )
-                           }
-                        >
-                           {navigate.title}
-                        </NavLink>
-                     ))}
+                  <Flex gap={20} align="center">
+                     {(isHost ? navigateHosts : navigates).map(
+                        (navigate, index) => (
+                           <NavLink
+                              key={index}
+                              to={navigate.path}
+                              className={({ isActive }) =>
+                                 clsx(
+                                    'relative font-main text-lg font-medium text-black transition duration-500 ease-in-out flex items-start gap-2',
+                                    isActive
+                                       ? 'navLink-active text-blue-500'
+                                       : '',
+                                    'navLink',
+                                 )
+                              }
+                           >
+                              <span>{navigate.title}</span>
+                           </NavLink>
+                        ),
+                     )}
                   </Flex>
                </div>
 
@@ -98,7 +104,7 @@ const Header: React.FC = () => {
                         <Button
                            className="hidden px-2 h-10 rounded-full md:px-7 lg:block font-main"
                            onClick={() =>
-                              setAuthModel({
+                              setAuthModal({
                                  isOpen: true,
                                  activeTab: 'signup',
                               })
@@ -110,7 +116,7 @@ const Header: React.FC = () => {
                            type="primary"
                            className="hidden px-2 h-10 text-white bg-blue-500 rounded-full md:px-7 lg:block font-main"
                            onClick={() =>
-                              setAuthModel({
+                              setAuthModal({
                                  isOpen: true,
                                  activeTab: 'signin',
                               })
@@ -143,10 +149,10 @@ const Header: React.FC = () => {
 
          <Modal
             centered
-            open={authModel.isOpen}
-            onOk={() => setAuthModel({ isOpen: false, activeTab: 'signin' })}
+            open={authModal.isOpen}
+            onOk={() => setAuthModal({ isOpen: false, activeTab: 'signin' })}
             onCancel={() =>
-               setAuthModel({ isOpen: false, activeTab: 'signin' })
+               setAuthModal({ isOpen: false, activeTab: 'signin' })
             }
             width={840}
             footer={null}
@@ -159,7 +165,7 @@ const Header: React.FC = () => {
          >
             <Tabs
                centered={true}
-               activeKey={authModel.activeTab}
+               activeKey={authModal.activeTab}
                items={tabItemsModal}
                tabBarGutter={0}
             />
@@ -180,27 +186,29 @@ const Header: React.FC = () => {
             closeIcon={null}
          >
             <div
-               className="flex flex-col gap-5 select-none p-5"
+               className="flex flex-col gap-5 select-none"
                onClick={() => setOpenNavigate(false)}
             >
                <Flex gap={20} vertical>
-                  {navigates.map((navigate, index) => (
-                     <NavLink
-                        className="flex gap-5 items-center font-medium font-main text-[22px]"
-                        key={index}
-                        to={navigate.path}
-                     >
-                        <span>{navigate.icon}</span>
-                        <span>{navigate.title}</span>
-                     </NavLink>
-                  ))}
+                  {(isHost ? navigateHosts : navigates).map(
+                     (navigate, index) => (
+                        <NavLink
+                           className="flex gap-5 items-center font-medium font-main text-[22px]"
+                           key={index}
+                           to={navigate.path}
+                        >
+                           <span>{navigate.icon}</span>
+                           <span>{navigate.title}</span>
+                        </NavLink>
+                     ),
+                  )}
                </Flex>
                {!isAuthenticated && (
                   <Flex gap={20} vertical>
                      <span
                         className="flex gap-5 items-center font-medium cursor-pointer font-main text-[22px]"
                         onClick={() =>
-                           setAuthModel({ isOpen: true, activeTab: 'signin' })
+                           setAuthModal({ isOpen: true, activeTab: 'signin' })
                         }
                      >
                         <PiSignInBold />
@@ -209,7 +217,7 @@ const Header: React.FC = () => {
                      <span
                         className="flex gap-5 items-center font-medium cursor-pointer font-main text-[22px]"
                         onClick={() =>
-                           setAuthModel({ isOpen: true, activeTab: 'signup' })
+                           setAuthModal({ isOpen: true, activeTab: 'signup' })
                         }
                      >
                         <span>

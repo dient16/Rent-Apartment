@@ -98,7 +98,7 @@ const PersonalInformation: React.FC = () => {
             fullscreen
             size="large"
          />
-         <div className="w-full">
+         <div className="w-full px-7">
             <form onSubmit={handleSubmit(handleEditUser)} className="w-full">
                <h2 className="mb-4 text-3xl font-semibold text-center">
                   Personal information

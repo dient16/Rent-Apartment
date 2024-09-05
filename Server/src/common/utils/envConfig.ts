@@ -17,6 +17,8 @@ export const env = cleanEnv(process.env, {
   CLIENT_URL: str({ devDefault: testOnly('http://localhost:8000') }),
   MONGODB_URL: str(),
   JWT_ACCESS_KEY: str(),
+  EMAIL_NAME: str(),
+  EMAIL_APP_PASSWORD: str(),
   JWT_REFRESH_KEY: str(),
   STRIPE_SECRET_KEY: str(),
   GOOGLE_CLIENT_ID: str(),

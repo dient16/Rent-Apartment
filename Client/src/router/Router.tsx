@@ -10,6 +10,8 @@ import {
    HostProfile,
    HostCalendar,
    CreateApartment,
+   HostMessage,
+   HostRoomDetail,
 } from '@/pages/host';
 import {
    ApartmentDetail,
@@ -20,9 +22,8 @@ import {
    SetPassword,
    LoginSuccess,
    NotFound,
-   // RentalListPage,
-   // RoomDetailsPage,
-   // ApartmentRoomsPage,
+   Contact,
+   About,
 } from '@/pages/public';
 import { path } from '@/utils/constant';
 import {
@@ -40,6 +41,14 @@ const Router = () => {
       {
          path: path.HOME,
          element: <Home />,
+      },
+      {
+         path: path.CONTACT,
+         element: <Contact />,
+      },
+      {
+         path: path.ABOUT,
+         element: <About />,
       },
       {
          path: path.LISTING,
@@ -77,30 +86,7 @@ const Router = () => {
          path: path.BOOKING_DETAIL,
          element: <BookingDetail />,
       },
-      // {
-      //    path: path.RENTAL_LIST,
-      //    element: <RentalListPage />,
-      // },
-      // {
-      //    path: path.ROOM_DETAILS,
-      //    element: <RoomDetailsPage />,
-      // },
-      // {
-      //    path: path.APARTMENT_ROOMS,
-      //    element: <ApartmentRoomsPage />,
-      // },
-      // {
-      //    path: path.ADMIN_DASHBOARD,
-      //    element: <AdminDashboard />,
-      // },
-      // {
-      //    path: path.USER_MANAGEMENT,
-      //    element: <UserManagement />,
-      // },
-      // {
-      //    path: path.REPORTS,
-      //    element: <Reports />,
-      // },
+
       {
          path: path.ACCOUNT_SETTINGS,
          element: <ManageAccount />,
@@ -141,6 +127,14 @@ const Router = () => {
       {
          path: path.CREATE_APARTMENT,
          element: <CreateApartment />,
+      },
+      {
+         path: path.HOST_MESSAGES,
+         element: <HostMessage />,
+      },
+      {
+         path: path.APARTMENT_ROOMS,
+         element: <HostRoomDetail />,
       },
    ];
 

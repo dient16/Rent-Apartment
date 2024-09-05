@@ -24,7 +24,7 @@ const SearchInfoBar: React.FC<SearchInfoBarProps> = ({
    const { control } = useFormContext();
 
    return (
-      <div className="sticky lg:top-[70px] top-[60px] left-0 right-0 z-50 px-2 py-1 bg-white border-b border-t">
+      <div className="sticky lg:top-[70px] top-[60px] left-0 right-0 z-50 md:px-10 mx-3 py-1 bg-white border-b border-t">
          <div className="flex items-center justify-between max-w-6xl mx-auto">
             <Controller
                name="searchDate"
@@ -37,18 +37,17 @@ const SearchInfoBar: React.FC<SearchInfoBarProps> = ({
                      open={!!fieldState.error}
                      placement="bottom"
                   >
-                     <div className="flex items-center space-x-2 text-sm text-black w-1/2">
-                        <CustomDatePicker
-                           value={field.value}
-                           onChange={(dates) => {
-                              field.onChange(dates);
-                              handleDateChange(dates);
-                           }}
-                           isShowRightIcon={false}
-                           isShowNight={false}
-                           className="max-w-[250px] border-none outline-none h-[20px]"
-                        />
-                     </div>
+                     <CustomDatePicker
+                        value={field.value}
+                        onChange={(dates) => {
+                           field.onChange(dates);
+                           handleDateChange(dates);
+                        }}
+                        isShowRightIcon={false}
+                        isShowNight={false}
+                        isBorder={false}
+                        className="!h-[25px] text-sm select-none"
+                     />
                   </Tooltip>
                )}
             />

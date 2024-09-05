@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
       MdOutlineKeyboardArrowRight,
    } = icons;
    return (
-      <footer className="flex justify-center items-center p-10 w-full min-h-[370px] bg-midnight-blue">
+      <footer className="flex justify-center items-center p-10 w-full min-h-[370px] bg-midnight-blue z-30 mt-5">
          <div className="flex flex-wrap gap-5 items-start w-full text-white max-w-main min-w-[240px]">
             <div className="flex flex-col flex-1 justify-center gap-[20px]">
                <div className="text-xl font-semibold font-main">About Site</div>

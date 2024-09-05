@@ -1,5 +1,6 @@
 import { RiHome4Line, RiContactsFill } from 'react-icons/ri';
 import { GrFavorite } from 'react-icons/gr';
+import { FaHome, FaCalendarAlt, FaListUl, FaComments } from 'react-icons/fa';
 
 export const path: { [key: string]: string } = {
    ROOT: '/',
@@ -32,9 +33,10 @@ export const path: { [key: string]: string } = {
    HOST_LISTINGS: 'listings',
    HOST_BOOKINGS: 'bookings',
    HOST_PROFILE: 'profile',
-   RENTAL_LIST: '/rental-list',
-   ROOM_DETAILS: '/room-details/:id',
-   APARTMENT_ROOMS: '/apartment-rooms/:apartmentId',
+   RENTAL_LIST: 'rental-list',
+   ROOM_DETAILS: 'room-details/:id',
+   APARTMENT_ROOMS: 'apartment-rooms/:apartmentId',
+   HOST_MESSAGES: 'messages',
 };
 
 export const navigates: {
@@ -45,4 +47,19 @@ export const navigates: {
    { title: 'Home', path: path.HOME, icon: <RiHome4Line /> },
    { title: 'Contact', path: path.CONTACT, icon: <RiContactsFill /> },
    { title: 'About', path: path.ABOUT, icon: <GrFavorite /> },
+];
+
+export const navigateHosts: {
+   title: string;
+   path: string;
+   icon: React.ReactNode;
+}[] = [
+   {
+      title: 'Dashboard',
+      path: path.HOST_DASHBOARD,
+      icon: <FaHome />,
+   },
+   { title: 'Calendar', path: path.HOST_CALENDAR, icon: <FaCalendarAlt /> },
+   { title: 'Rental Listings', path: path.HOST_LISTINGS, icon: <FaListUl /> },
+   { title: 'Messages', path: path.HOST_MESSAGES, icon: <FaComments /> },
 ];

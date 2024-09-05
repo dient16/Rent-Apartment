@@ -92,7 +92,7 @@ const RoomImagesForm: React.FC<RoomImagesFormProps> = ({ index }) => {
    );
 
    return (
-      <div className="mb-6 w-full mx-auto">
+      <div className="mb-6 w-full mx-auto upload-images">
          <label className="block text-lg font-medium text-gray-700">
             Upload Room Images
          </label>
@@ -147,7 +147,7 @@ const RoomImagesForm: React.FC<RoomImagesFormProps> = ({ index }) => {
                      {uploadButton}
                   </Upload>
                   {error && (
-                     <p className="text-red-500 mt-1">{error.message}</p>
+                     <p className="text-red-500 mt-2">{error.message}</p>
                   )}
                </>
             )}

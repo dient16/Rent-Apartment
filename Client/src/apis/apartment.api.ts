@@ -23,23 +23,37 @@ export const apiCreateStripePayment = (data: {
    amount: number;
    description?: string;
    source?: string;
-}): Promise<{ clientSecret: string }> =>
+}): Promise<{ data: string }> =>
    axios({
       url: `/apartment/create-stripe-payment`,
       method: 'post',
       data,
    });
 export const apiGetRoomCheckout = ({
-   roomId,
+   roomIds,
+   roomNumbers,
    params,
 }: {
-   roomId: string;
+   roomIds: string[];
+   roomNumbers: number[];
    params: string;
-}): Promise<Res> =>
-   axios({
-      url: `/apartment/room/${roomId}?${params}`,
+}): Promise<Res> => {
+   const roomParams = roomIds
+      .map(
+         (id, index) =>
+            `roomIds[]=${encodeURIComponent(
+               id,
+            )}&roomNumbers[]=${encodeURIComponent(roomNumbers[index])}`,
+      )
+      .join('&');
+
+   const url = `/apartment/get-room-checkout?${roomParams}&${params}`;
+
+   return axios({
+      url,
       method: 'get',
    });
+};
 export const apiGetApartmentByUser = (): Promise<Res> =>
    axios({
       url: `/apartment/by-user`,
@@ -49,4 +63,33 @@ export const apiGetApartmentPopular = (): Promise<Res> =>
    axios({
       url: `/apartment/popular-rooms`,
       method: 'get',
+   });
+export const apiGetRoomByApartmentId = (id: string): Promise<Res> =>
+   axios({
+      url: `/room/apartments/${id}`,
+      method: 'get',
+   });
+export const apiGetPricingByRoomId = (id: string): Promise<Res> =>
+   axios({
+      url: `/pricing/${id}`,
+      method: 'get',
+   });
+export const apiGetApartmentDetails = (apartmentId: string): Promise<Res> =>
+   axios({
+      url: `/room/apartments/${apartmentId}`,
+      method: 'get',
+   });
+export const apiUpdatePricing = (
+   roomId: string,
+   date: string,
+   price: number,
+): Promise<Res> =>
+   axios({
+      url: `/pricing`,
+      method: 'put',
+      data: {
+         roomId,
+         date,
+         price,
+      },
    });

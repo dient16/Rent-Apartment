@@ -14,6 +14,9 @@ interface PaymentProps {
    setStep: (step: number) => void;
    amount: number;
    nameRoom: string;
+   checkInTime: string | null;
+   checkOutTime: string | null;
+   rooms: { roomId: string; roomNumber: number }[];
    CustomerInfoData: CustomerBooking;
 }
 const Payment: React.FC<PaymentProps> = ({
@@ -21,6 +24,9 @@ const Payment: React.FC<PaymentProps> = ({
    setStep,
    amount,
    nameRoom,
+   checkInTime,
+   checkOutTime,
+   rooms,
    CustomerInfoData,
 }) => {
    const [clientSecret, setClientSecret] = useState('');
@@ -36,40 +42,55 @@ const Payment: React.FC<PaymentProps> = ({
    useEffect(() => {
       const getSecret = async () => {
          const secretKey = await apiCreateStripePayment({ amount: amount });
-         setClientSecret(secretKey.clientSecret);
+         setClientSecret(secretKey.data);
       };
       getSecret();
    }, [amount]);
    const handleBooking = async () => {
-      bookingMutation.mutate(CustomerInfoData, {
-         onSuccess: (response: Res) => {
-            if (response.success) {
-               queryClient.invalidateQueries({
-                  queryKey: ['my-booking'],
-               });
-               navigate(`/booking-completion/${response.data.booking._id}`);
-            }
+      bookingMutation.mutate(
+         {
+            ...CustomerInfoData,
+            checkInTime,
+            checkOutTime,
+            rooms,
+            totalPrice: amount,
          },
-      });
+         {
+            onSuccess: (response: Res) => {
+               if (response.success) {
+                  queryClient.invalidateQueries({
+                     queryKey: ['my-booking'],
+                  });
+                  navigate(`/booking-completion/${response.data._id}`);
+               }
+            },
+         },
+      );
    };
    return (
-      <React.Fragment>
+      <>
          <Spin
             size="large"
             spinning={bookingMutation.isPending}
             fullscreen={bookingMutation.isPending}
          />
          <div className="mx-2 space-y-5">
-            <div className="border border-gray-300 rounded-lg p-8">
+            <div className="bg-white rounded-lg p-4 sm:p-8">
                <Radio.Group
-                  className="flex items-center gap-5"
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5"
                   value={selectTypePayment}
                   onChange={(e) => setSelectTypePayment(e.target.value)}
                >
-                  <Radio className="text-lg font-normal" value="before">
+                  <Radio
+                     className="text-base sm:text-lg font-normal"
+                     value="before"
+                  >
                      Payment by card
                   </Radio>
-                  <Radio className="text-lg font-normal" value="after">
+                  <Radio
+                     className="text-base sm:text-lg font-normal"
+                     value="after"
+                  >
                      Pay upon check-in
                   </Radio>
                </Radio.Group>
@@ -84,6 +105,10 @@ const Payment: React.FC<PaymentProps> = ({
                         <CheckoutForm
                            setActiveTab={setActiveTab}
                            setStep={setStep}
+                           amount={amount}
+                           checkInTime={checkInTime}
+                           checkOutTime={checkOutTime}
+                           rooms={rooms}
                            CustomerInfoData={CustomerInfoData}
                         />
                      </Elements>
@@ -92,16 +117,15 @@ const Payment: React.FC<PaymentProps> = ({
             )}
             {selectTypePayment === 'after' && (
                <div className="space-y-5">
-                  <div className="border p-5 border-gray-300 rounded-lg">
+                  <div className="p-4 sm:p-5 bg-white rounded-lg">
                      <div className="text-lg font-medium">
                         You have chosen to pay upon check-in
                      </div>
-                     <div>
-                        {` Your payment will be processed by ${nameRoom} as you have chosen to pay upon
-                      check-in.`}
+                     <div className="text-sm sm:text-base">
+                        {` Your payment will be processed by ${nameRoom} as you have chosen to pay upon check-in.`}
                      </div>
                   </div>
-                  <Flex align="center" justify="space-between">
+                  <Flex className="flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-0">
                      <Button
                         size="large"
                         shape="circle"
@@ -119,7 +143,7 @@ const Payment: React.FC<PaymentProps> = ({
                         htmlType="submit"
                         type="primary"
                         size="large"
-                        className="bg-blue-500 flex items-center justify-center"
+                        className="bg-blue-500 flex items-center justify-center mt-3 sm:mt-0"
                         icon={<FaLock />}
                         onClick={handleBooking}
                      >
@@ -129,7 +153,7 @@ const Payment: React.FC<PaymentProps> = ({
                </div>
             )}
          </div>
-      </React.Fragment>
+      </>
    );
 };
 

@@ -1,13 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 
 const NOMINATIM_API_URL = 'https://nominatim.openstreetmap.org/reverse';
-export const apiGetAddress = ({
-   lat,
-   lng,
-}: {
-   lat: number;
-   lng: number;
-}): Promise<AxiosResponse> =>
+export const apiGetAddress = (
+   lat: number,
+   lng: number,
+): Promise<AxiosResponse> =>
    axios({
       url: NOMINATIM_API_URL,
       method: 'get',

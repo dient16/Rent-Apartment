@@ -1,12 +1,12 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import HostHeader from '@/components/Header/HeaderHost';
+import { Header } from '@/components';
 import { Footer } from '@/components';
 
 const HostLayout: React.FC = () => {
    return (
       <div className="flex flex-col justify-center items-center w-full font-main">
-         <HostHeader />
+         <Header isHost={true} />
          <div className="w-full min-h-screen">
             <Outlet />
          </div>

@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
-
 import { bookingService } from './bookingService';
+import { handleServiceResponse } from '@/common/utils/httpHandlers';
 
 export const createBooking = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const serviceResponse = await bookingService.createBooking(req.body);
-    return res.status(serviceResponse.statusCode).json(serviceResponse);
+    handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
   }
@@ -15,7 +15,7 @@ export const getBookings = async (req: Request, res: Response, next: NextFunctio
   try {
     const { _id: userId } = req.user;
     const serviceResponse = await bookingService.getBookings(userId);
-    return res.status(serviceResponse.statusCode).json(serviceResponse);
+    handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
   }
@@ -25,7 +25,26 @@ export const getBooking = async (req: Request, res: Response, next: NextFunction
   try {
     const { bookingId } = req.params;
     const serviceResponse = await bookingService.getBooking(bookingId);
-    return res.status(serviceResponse.statusCode).json(serviceResponse);
+    handleServiceResponse(serviceResponse, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserBookings = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { _id: userId } = req.user;
+    const serviceResponse = await bookingService.getUserBookings(userId);
+    handleServiceResponse(serviceResponse, res);
+  } catch (error) {
+    next(error);
+  }
+};
+export const confirmBooking = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { bookingId } = req.params;
+    const serviceResponse = await bookingService.confirmBooking(bookingId);
+    handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
   }

@@ -22,26 +22,12 @@ const InputField: React.FC<InputFieldProps> = ({
    label,
    className,
    rows,
+   addonAfter,
    formatter,
    parser,
-   addonAfter,
 }) => {
-   const { control } = useFormContext();
-   let InputComponent:
-      | typeof Input
-      | typeof InputNumber
-      | typeof Input.TextArea;
-
-   switch (type) {
-      case 'number':
-         InputComponent = InputNumber;
-         break;
-      case 'textarea':
-         InputComponent = Input.TextArea;
-         break;
-      default:
-         InputComponent = Input;
-   }
+   const { control, clearErrors } = useFormContext();
+   const isRequired = rules?.['required'];
 
    return (
       <Controller
@@ -49,42 +35,57 @@ const InputField: React.FC<InputFieldProps> = ({
          name={name}
          rules={rules}
          render={({ field, fieldState: { error } }) => (
-            <div>
-               <div
-                  className={clsx(
-                     'relative input-container border border-gray-400 rounded-md transition-all px-3 z-10 select-none',
-                     {
-                        'border-green-700': field.value || field.value === 0,
-                     },
-                  )}
+            <div className={clsx('mb-4', className)}>
+               <label
+                  htmlFor={name}
+                  className="block text-sm font-normal text-gray-700 mb-1"
                >
-                  <InputComponent
+                  {label}
+                  {isRequired && <span className="text-red-600"> *</span>}
+               </label>
+               {type === 'textarea' ? (
+                  <Input.TextArea
+                     {...field}
                      rows={rows}
+                     id={name}
+                     size="large"
+                     status={error && 'error'}
+                     className="w-full"
+                     onChange={(value) => {
+                        clearErrors(name);
+                        field.onChange(value);
+                     }}
+                  />
+               ) : type === 'number' ? (
+                  <InputNumber
+                     {...field}
+                     id={name}
+                     className="w-full"
+                     size="large"
+                     status={error && 'error'}
+                     addonAfter={addonAfter}
                      formatter={formatter}
                      parser={parser}
-                     {...field}
-                     className={clsx(
-                        'font-main text-md input-field',
-                        type === 'number' ? '' : 'h-16',
-                        type === 'textarea' ? 'mt-5' : 'h-16',
-                        className,
-                     )}
-                     addonAfter={addonAfter}
-                     variant="borderless"
+                     onChange={(value) => {
+                        clearErrors(name);
+                        field.onChange(value);
+                     }}
                   />
-                  <label
-                     className={clsx(
-                        'text-md absolute left-6 transform -translate-y-1/2 text-gray-600 transition-all duration-200 input-label',
-                        type === 'textarea' ? 'top-9' : 'top-1/2',
-                        {
-                           'text-sm transform -translate-y-8 left-5':
-                              field.value,
-                        },
-                     )}
-                  >
-                     {label}
-                  </label>
-               </div>
+               ) : (
+                  <Input
+                     {...field}
+                     type={type}
+                     id={name}
+                     className="w-full"
+                     size="large"
+                     status={error && 'error'}
+                     addonAfter={addonAfter}
+                     onChange={(value) => {
+                        clearErrors(name);
+                        field.onChange(value);
+                     }}
+                  />
+               )}
                {error && (
                   <span className="text-red-600 text-sm">{error.message}</span>
                )}

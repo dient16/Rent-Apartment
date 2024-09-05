@@ -2,13 +2,16 @@ import RoomSelection from './RoomSelection';
 
 interface RoomsListProps {
    roomList: RoomOption[];
-   onChange: (selectedRooms: { roomId: string; count: number }[]) => void;
+   onChange: (
+      selectedRooms: { roomId: string; roomType: string; count: number }[],
+   ) => void;
    value: { roomId: string; roomType: string; count: number }[];
 }
 
 const RoomsList: React.FC<RoomsListProps> = ({ roomList, onChange, value }) => {
    const handleRoomSelection = (selectedRoom: {
       roomId: string;
+      roomType: string;
       count: number;
    }) => {
       const updatedSelectedRooms = value.filter(

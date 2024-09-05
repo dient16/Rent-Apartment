@@ -1,57 +1,237 @@
 import React from 'react';
-import { Button, Typography, Divider } from 'antd';
+import {
+   Tabs,
+   Typography,
+   List,
+   Avatar,
+   Button,
+   Tag,
+   Statistic,
+   Card,
+   Row,
+   Col,
+   Spin,
+   message,
+} from 'antd';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+   apiGetUserBookings,
+   apiGetApartmentByUser,
+   apiConfirmBooking,
+} from '@/apis';
+import { FaBed, FaCalendarDay } from 'react-icons/fa';
+import { MdLocationOn } from 'react-icons/md';
 
-const { Title, Text } = Typography;
-
+const { Title } = Typography;
+const getTagColor = (status) => {
+   switch (status) {
+      case 'pending':
+         return 'yellow';
+      case 'confirmed':
+         return 'green';
+      case 'canceled':
+         return 'red';
+      case 'completed':
+         return 'blue';
+      default:
+         return 'gray';
+   }
+};
 const HostDashboard: React.FC = () => {
+   const queryClient = useQueryClient();
+   const { data: bookingsData, isLoading: bookingsLoading } = useQuery({
+      queryKey: ['bookings-host'],
+      queryFn: apiGetUserBookings,
+   });
+
+   const { data: apartmentsData, isLoading: apartmentsLoading } = useQuery({
+      queryKey: ['apartments-host'],
+      queryFn: apiGetApartmentByUser,
+   });
+
+   const mutation = useMutation({
+      mutationFn: apiConfirmBooking,
+      onSuccess: (response) => {
+         if (response.success) {
+            queryClient.invalidateQueries({
+               queryKey: ['bookings-host'],
+            });
+            message.success('Booking confirmed successfully.');
+         } else message.error('Error confirming the booking.');
+      },
+      onError: () => {
+         message.error('Error confirming the booking.');
+      },
+   });
+
+   const bookings = bookingsData?.data || [];
+   const apartments = apartmentsData?.data || [];
+
+   const financialOverview = {
+      totalRevenue: 0,
+      totalBookings: bookings.length,
+      pendingPayouts: 0,
+   };
+
+   const handleConfirmBooking = (bookingId: string) => {
+      mutation.mutate(bookingId);
+   };
+
+   const renderBookingList = (status: string) => (
+      <List
+         itemLayout="horizontal"
+         dataSource={bookings?.filter((booking) => booking.status === status)}
+         renderItem={(booking: any) => (
+            <List.Item
+               actions={
+                  status === 'pending'
+                     ? [
+                          <Button
+                             type="primary"
+                             className="bg-blue-500"
+                             onClick={() => handleConfirmBooking(booking?._id)}
+                             loading={mutation.isPending}
+                          >
+                             Confirm
+                          </Button>,
+                       ]
+                     : []
+               }
+            >
+               <List.Item.Meta
+                  avatar={<Avatar style={{ backgroundColor: '#87d068' }} />}
+                  title={
+                     <Link to={`/reservation/${booking?._id}`}>
+                        {booking?.firstname} {booking?.lastname}
+                     </Link>
+                  }
+                  description={
+                     <div className="space-y-1">
+                        <p className="flex items-center text-sm text-gray-700">
+                           <FaBed className="mr-2 text-blue-600" /> Room
+                           Numbers:{' '}
+                           {booking?.rooms
+                              .map((room) => room?.roomNumber)
+                              .join(', ')}
+                        </p>
+                        <p className="flex items-center text-sm text-gray-700">
+                           <MdLocationOn className="mr-2 text-green-600" />{' '}
+                           Check-In:{' '}
+                           {new Date(booking?.checkInTime).toLocaleDateString()}
+                        </p>
+                        <p className="flex items-center text-sm text-gray-700">
+                           <FaCalendarDay className="mr-2 text-red-600" />{' '}
+                           Check-Out:{' '}
+                           {new Date(
+                              booking?.checkOutTime,
+                           ).toLocaleDateString()}
+                        </p>
+                        <p className="flex items-center text-lg font-medium text-gray-700">
+                           Total Price:{' '}
+                           {booking?.totalPrice?.toLocaleString('vi-VN', {
+                              style: 'currency',
+                              currency: 'VND',
+                           })}
+                        </p>
+                     </div>
+                  }
+               />
+               <Tag color={getTagColor(booking?.status)}>{booking?.status}</Tag>
+            </List.Item>
+         )}
+      />
+   );
+
    return (
-      <div className="container p-4 mx-auto">
-         <div className="flex justify-between items-center mb-4">
-            <Title level={2}>Đặt phòng/đặt chỗ của bạn</Title>
-            <Link to="/all-reservations">
-               <Text strong>Tất cả đặt phòng (0)</Text>
-            </Link>
-         </div>
-         <div className="flex mb-4 space-x-4">
-            <Button type="default" shape="round">
-               Sắp trả phòng (0)
-            </Button>
-            <Button type="default" shape="round">
-               Hiện đang đón tiếp (0)
-            </Button>
-            <Button type="default" shape="round">
-               Sắp đến (0)
-            </Button>
-            <Button type="default" shape="round">
-               Sắp tới (0)
-            </Button>
-            <Button type="default" shape="round">
-               Đánh giá đang chờ xử lý (0)
-            </Button>
-         </div>
-         <Divider />
-         <div className="flex flex-col justify-center items-center h-64 bg-gray-100 rounded-lg">
-            <div className="text-center">
-               <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="mb-4 w-12 h-12"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     d="M9 12h6m2 0a2 2 0 11-4 0 2 2 0 114 0zm-6 4a6 6 0 100-12 6 6 0 000 12zm12 0a6 6 0 100-12 6 6 0 000 12zM6 12a6 6 0 100-12 6 6 0 000 12z"
-                  />
-               </svg>
-               <Text>
-                  Bạn không có khách nào trả phòng vào hôm nay hoặc ngày mai.
-               </Text>
-            </div>
-         </div>
+      <div className="container mx-auto p-6">
+         <Title level={2} className="mb-6 text-center">
+            Host Dashboard
+         </Title>
+
+         <Spin spinning={bookingsLoading || apartmentsLoading} tip="Loading...">
+            <Row gutter={16} className="mb-6">
+               <Col span={8}>
+                  <Card>
+                     <Statistic
+                        title="Total Revenue"
+                        value={financialOverview.totalRevenue.toLocaleString(
+                           'vi-VN',
+                           { style: 'currency', currency: 'VND' },
+                        )}
+                     />
+                  </Card>
+               </Col>
+               <Col span={8}>
+                  <Card>
+                     <Statistic
+                        title="Total Bookings"
+                        value={financialOverview?.totalBookings}
+                     />
+                  </Card>
+               </Col>
+               <Col span={8}>
+                  <Card>
+                     <Statistic
+                        title="Pending Payouts"
+                        value={financialOverview.pendingPayouts.toLocaleString(
+                           'vi-VN',
+                           { style: 'currency', currency: 'VND' },
+                        )}
+                     />
+                  </Card>
+               </Col>
+            </Row>
+
+            <Tabs
+               defaultActiveKey="1"
+               className="mb-6"
+               items={[
+                  {
+                     label: 'Pending',
+                     key: '1',
+                     children: renderBookingList('pending'),
+                  },
+                  {
+                     label: 'Confirmed',
+                     key: '2',
+                     children: renderBookingList('confirmed'),
+                  },
+                  {
+                     label: 'Canceled',
+                     key: '3',
+                     children: renderBookingList('canceled'),
+                  },
+                  {
+                     label: 'Completed',
+                     key: '4',
+                     children: renderBookingList('completed'),
+                  },
+               ]}
+            />
+
+            <Title level={3} className="mt-6 mb-4 text-center">
+               Apartment Management
+            </Title>
+            <Row gutter={16}>
+               {apartments.map((apartment) => (
+                  <Col span={8} key={apartment._id}>
+                     <Card title={apartment.title}>
+                        <p className="flex items-center">
+                           <MdLocationOn className="mr-2" /> Location:{' '}
+                           {apartment.location.province}, Vietnam
+                        </p>
+                        <p>Rooms: {apartment.rooms.length}</p>
+                        <Button type="link">
+                           <Link to={`/host/apartment-rooms/${apartment._id}`}>
+                              View Details
+                           </Link>
+                        </Button>
+                     </Card>
+                  </Col>
+               ))}
+            </Row>
+         </Spin>
       </div>
    );
 };

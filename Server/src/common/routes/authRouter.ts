@@ -70,7 +70,7 @@ authRegistry.registerPath({
   responses: createApiResponse(UserSchema, 'Success'),
 });
 
-router.post('/refresh-token', verifyAccessToken, controller.refreshAccessToken);
+router.post('/refresh-token', controller.refreshAccessToken);
 
 authRegistry.registerPath({
   method: 'get',

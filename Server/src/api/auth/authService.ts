@@ -197,6 +197,7 @@ export const authService = {
 
   async refreshAccessToken(refreshToken: string): Promise<ServiceResponse<{ accessToken: string } | null>> {
     const decodedToken = jwt.verify(refreshToken, JWT_REFRESH_KEY) as { _id: string };
+
     if (!decodedToken) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid refresh token', null, StatusCodes.UNAUTHORIZED);
     }

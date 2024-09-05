@@ -86,7 +86,15 @@ export const googleLoginSuccess = async (req: Request, res: Response, next: Next
   try {
     const { userId } = req.params;
     const serviceResponse = await authService.googleLoginSuccess(userId);
-
+    if (serviceResponse.success && serviceResponse.data) {
+      const { refreshToken } = serviceResponse.data;
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        sameSite: 'strict',
+      });
+    }
     handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);

@@ -21,7 +21,7 @@ const RoomAmenitiesSelector: React.FC<RoomAmenitiesSelectorProps> = ({
    };
 
    return (
-      <div className="grid grid-cols-5 gap-4">
+      <div className="flex items-center flex-wrap gap-4">
          {options.map((option) => (
             <RoomAmenityItem
                key={option.value}

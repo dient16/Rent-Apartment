@@ -3,21 +3,33 @@ import {
    useElements,
    PaymentElement,
 } from '@stripe/react-stripe-js';
-import { Button, Flex, Spin } from 'antd';
+import { Button, Spin } from 'antd';
 import icons from '@/utils/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiBooking } from '@/apis';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 const { IoIosArrowBack, FaLock } = icons;
+
 interface CheckoutFormProps {
    setActiveTab: (activeTab: string) => void;
    setStep: (step: number) => void;
+   amount: number;
+
+   checkInTime: string | null;
+   checkOutTime: string | null;
+   rooms: { roomId: string; roomNumber: number }[];
    CustomerInfoData: CustomerBooking;
 }
+
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
    setActiveTab,
    setStep,
+   amount,
+   checkInTime,
+   checkOutTime,
+   rooms,
    CustomerInfoData,
 }) => {
    const stripe = useStripe();
@@ -61,7 +73,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                response.error.message || 'An unexpected error occurred.',
             );
          } else {
-            bookingMutation.mutate(CustomerInfoData);
+            bookingMutation.mutate({
+               ...CustomerInfoData,
+               checkInTime,
+               checkOutTime,
+               rooms,
+               totalPrice: amount,
+            });
          }
       },
       onError: (error) => {
@@ -80,14 +98,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
    };
 
    return (
-      <span>
+      <span className="w-full">
          <Spin
             size="large"
             spinning={bookingMutation.isPending}
             fullscreen={bookingMutation.isPending}
          />
          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="border border-gray-300 rounded-lg p-8 space-y-5">
+            <div className="bg-white rounded-lg p-5 sm:p-8 space-y-5">
                <div className="text-lg font-semibold mb-5">
                   Please enter payment information
                </div>
@@ -98,7 +116,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                   </div>
                )}
             </div>
-            <Flex align="center" justify="space-between">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
                <Button
                   size="large"
                   shape="circle"
@@ -116,13 +134,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                   htmlType="submit"
                   type="primary"
                   size="large"
-                  className="bg-blue-500 flex items-center justify-center"
+                  className="bg-blue-500 flex items-center justify-center w-full sm:w-auto"
                   loading={confirmPaymentMutation.isPending}
                   icon={<FaLock />}
                >
                   Complete booking
                </Button>
-            </Flex>
+            </div>
          </form>
       </span>
    );

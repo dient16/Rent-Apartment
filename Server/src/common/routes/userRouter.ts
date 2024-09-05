@@ -44,17 +44,7 @@ export const userRouter: Router = (() => {
     responses: createApiResponse(UserSchema, 'Success'),
   });
 
-  router.put(
-    '/',
-    verifyAccessToken,
-    validateRequest(
-      z.object({
-        params: z.object({ id: commonValidations.id }),
-      })
-    ),
-    upload.single('avatar'),
-    controller.editUser
-  );
+  router.put('/', verifyAccessToken, upload.single('avatar'), controller.editUser);
 
   return router;
 })();

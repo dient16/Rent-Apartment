@@ -25,3 +25,8 @@ export { default as SummaryCard } from './SearchResult/SummaryCard';
 export { default as CustomDatePicker } from './CustomDatePicker/CustomDatePicker';
 export { default as AutoCompleteAddress } from './AutoCompleteAddress/AutoCompleteAddress';
 export { default as ApartmentPopular } from './ApartmentPopular/ApartmentPopular';
+export { default as Step1FormApartment } from './CreateApartmentForm/Step1';
+export { default as Step2FormApartment } from './CreateApartmentForm/Step2';
+export { default as Step3FormApartment } from './CreateApartmentForm/Step3';
+export { default as RoomAmenitySelector } from './AmenitiesCheckbox/RoomAmenitiesSelector';
+export { default as RoomInfo } from './RoomInfo/RoomInfo';

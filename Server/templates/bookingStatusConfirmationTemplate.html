@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking Status Confirmation</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #5cb85c;
+      }
+      .content {
+        margin: 20px 0;
+      }
+      .content p {
+        line-height: 1.6;
+      }
+      .footer {
+        font-size: 0.9em;
+        color: #777;
+        margin-top: 20px;
+      }
+      .footer a {
+        color: #5cb85c;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Booking Status Confirmed</h1>
+      <div class="content">
+        <p>Dear {{firstname}} {{lastname}},</p>
+        <p>Your booking with ID <strong>{{bookingId}}</strong> has been successfully confirmed.</p>
+        <p><strong>Check-in:</strong> {{checkInTime}}</p>
+        <p><strong>Check-out:</strong> {{checkOutTime}}</p>
+        <p><strong>Total Price:</strong> {{totalPrice}}</p>
+        <p>Thank you for booking with us!</p>
+      </div>
+      <div class="footer">
+        <p>If you have any questions, feel free to <a href="mailto:support@example.com">contact us</a>.</p>
+        <p>Best regards,<br />Your Booking Team</p>
+      </div>
+    </div>
+  </body>
+</html>

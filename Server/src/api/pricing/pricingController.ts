@@ -15,3 +15,14 @@ export const updatePricing = async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 };
+export const getPricingByRoomId = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { roomId } = req.params;
+
+    const serviceResponse = await pricingService.getPricingByRoomId(roomId);
+
+    handleServiceResponse(serviceResponse, res);
+  } catch (error) {
+    next(error);
+  }
+};

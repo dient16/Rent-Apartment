@@ -4,3 +4,5 @@ export { default as HostListings } from './HostListings';
 export { default as HostCalendar } from './HostCalendar';
 export { default as HostDashboard } from './HostDashboard';
 export { default as CreateApartment } from './CreateApartment';
+export { default as HostMessage } from './HostMessage';
+export { default as HostRoomDetail } from './HostRoomDetail';

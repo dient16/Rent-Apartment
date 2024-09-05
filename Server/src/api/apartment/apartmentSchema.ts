@@ -57,12 +57,13 @@ export const searchRoomSchema = z.object({
 
 const roomSchema = z.object({
   amenities: z.array(z.string()),
-  size: z.number(),
-  price: z.number(),
+  size: stringToNumber(z.number()),
+  price: stringToNumber(z.number()),
   images: z.array(z.string()),
   roomType: z.string(),
-  numberOfGuest: z.number(),
-  quantity: z.number(),
+  bedType: z.string().optional(),
+  numberOfGuest: stringToNumber(z.number()),
+  quantity: stringToNumber(z.number()),
 });
 export const createApartmentSchema = z.object({
   body: z.object({
@@ -74,8 +75,6 @@ export const createApartmentSchema = z.object({
     checkInTime: z.string().optional(),
     checkOutTime: z.string().optional(),
     safetyInfo: z.array(z.string()).optional(),
-    cancellationPolicy: z.string().optional(),
-    discountPolicies: z.array(z.string()).optional(),
   }),
 
   user: userDecodeSchema,
