@@ -5,7 +5,6 @@ import { z } from 'zod';
 import * as controller from '@/api/room/roomController';
 import { createRoomSchema, roomSchema, updateRoomSchema } from '@/api/room/roomSchema';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
-import upload from '@/common/middleware/uploadFile';
 import { verifyAccessToken } from '@/common/middleware/verifyToken';
 import { validateRequest } from '@/common/utils/httpHandlers';
 
@@ -31,7 +30,7 @@ roomRegistry.registerPath({
   responses: createApiResponse(roomSchema, 'Success'),
 });
 
-router.post('/', verifyAccessToken, upload.any(), validateRequest(createRoomSchema), controller.addRoomToApartment);
+router.post('/', verifyAccessToken, validateRequest(createRoomSchema), controller.addRoomToApartment);
 
 roomRegistry.registerPath({
   method: 'get',
@@ -81,5 +80,18 @@ roomRegistry.registerPath({
 });
 
 router.delete('/:roomId', verifyAccessToken, controller.deleteRoom);
+roomRegistry.registerPath({
+  method: 'get',
+  path: '/api/apartment/:apartmentId/rooms',
+  tags: ['Room'],
+  request: {
+    params: z.object({
+      apartmentId: z.string(),
+    }),
+  },
+  responses: createApiResponse(z.array(roomSchema), 'Success'),
+});
+
+router.get('/apartments/:apartmentId', controller.getRoomsByApartmentId);
 
 export default router;

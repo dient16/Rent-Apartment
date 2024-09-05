@@ -24,8 +24,8 @@ export interface PayloadAction<T> {
 
 export interface AuthContextType extends AuthState {
    dispatch: Dispatch<PayloadAction<AuthState>>;
-   authModel: { isOpen: boolean; activeTab: string };
-   setAuthModel: Dispatch<
+   authModal: { isOpen: boolean; activeTab: string };
+   setAuthModal: Dispatch<
       React.SetStateAction<{ isOpen: boolean; activeTab: string }>
    >;
 }
@@ -39,13 +39,13 @@ const initialState: AuthState = {
 export const AuthContext = createContext<AuthContextType>({
    ...initialState,
    dispatch: () => null,
-   authModel: { isOpen: false, activeTab: 'signin' },
-   setAuthModel: () => {},
+   authModal: { isOpen: false, activeTab: 'signin' },
+   setAuthModal: () => {},
 });
 
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
    const [state, dispatch] = useReducer(reducer, initialState);
-   const [authModel, setAuthModel] = useState<{
+   const [authModal, setAuthModal] = useState<{
       isOpen: boolean;
       activeTab: string;
    }>({
@@ -83,7 +83,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
    return (
       <AuthContext.Provider
-         value={{ ...state, dispatch, authModel, setAuthModel }}
+         value={{ ...state, dispatch, authModal, setAuthModal }}
       >
          <Spin spinning={isLoading} fullscreen={isLoading} size="large">
             {children}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Image } from 'antd';
+import { Image, Tag } from 'antd';
 import icons from '@/utils/icons';
 import { useMediaQuery } from 'react-responsive';
 const { IoHeartSharp, GoLocation } = icons;
@@ -74,9 +74,9 @@ const SearchItem: React.FC<SearchItemProps> = ({
                            amenity: { name: string; icon: string },
                            index: number,
                         ) => (
-                           <span key={index} className="px-3 border">
+                           <Tag key={index} color="geekblue">
                               {amenity.name}
-                           </span>
+                           </Tag>
                         ),
                      )}
                   </div>

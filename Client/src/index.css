@@ -25,7 +25,7 @@
 }
 
 /* disable next, prev date range picker  */
-.ant-picker-header-super-next-btn {
+/* .ant-picker-header-super-next-btn {
    display: none;
 }
 .ant-picker-header-super-prev-btn {
@@ -33,13 +33,13 @@
 }
 .ant-picker-time-panel {
    display: none !important;
-}
+} */
 /* set width and height upload images */
-.ant-upload-list-item-container {
+.upload-images .ant-upload-list-item-container {
    width: 350px !important;
    height: 320px !important;
 }
-.ant-upload {
+.upload-images .ant-upload {
    width: 350px !important;
    height: 320px !important;
 }
@@ -49,6 +49,6 @@
 .ant-collapse-header {
    padding: 0 !important;
 }
-.ant-drawer-content .ant-drawer-body {
-   padding: 0 !important;
+.ant-spin-fullscreen .ant-spin-fullscreen-show {
+   z-index: 1000000000 !important;
 }

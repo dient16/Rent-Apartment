@@ -27,17 +27,17 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ searchParams, onClick }) => {
 
    return (
       <div
-         className="w-full bg-white py-3 px-4 md:px-10 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors md:hover:bg-gray-200 md:shadow-sm md:hover:shadow-md"
+         className="w-full bg-white py-3 px-3 lg:px-10 md:px-5 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors md:hover:bg-gray-200 md:shadow-sm md:hover:shadow-md shadow-sm"
          onClick={onClick}
       >
-         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-8 w-full">
-            <div className="flex items-center gap-2">
+         <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between w-full">
+            <div className="flex items-center gap-2 md:max-w-[220px] min-w-[37%] my-1">
                <FaMapMarkerAlt className="text-gray-500" />
                <span className="text-sm font-normal md:text-base">
                   {province || 'Location'}
                </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 my-1">
                <div className="flex items-center gap-2 md:ml-4 md:mt-0">
                   <FiCalendar className="text-gray-500" />
                   <span className="text-sm md:text-base font-light">
@@ -51,7 +51,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ searchParams, onClick }) => {
                   </span>
                </div>
             </div>
-            <div className="flex items-center gap-2 md:mt-0">
+            <div className="flex items-center gap-2 md:mt-0 my-1">
                <FiUser className="text-gray-500" />
                <span className="text-sm md:text-base font-light">
                   {numberOfGuests} guests, {numberOfRooms} rooms

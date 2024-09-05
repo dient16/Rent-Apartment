@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { FaBed, FaShower, FaSmokingBan, FaUsers } from 'react-icons/fa';
+import { Modal } from 'antd';
+import { RoomInfo } from '@/components';
+
+interface RoomOption {
+   _id: string;
+   roomType: string;
+   size: number;
+   quantity: number;
+   numberOfGuest: number;
+   price: number;
+   totalPrice: number;
+   images: string[];
+}
 
 interface RoomSelectionProps {
    roomOption: RoomOption;
@@ -17,6 +30,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
    selectedCount,
 }) => {
    const [count, setCount] = useState<number>(selectedCount);
+   const [isModalVisible, setIsModalVisible] = useState(false);
 
    useEffect(() => {
       setCount(selectedCount);
@@ -41,6 +55,18 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
       if (count > 0) {
          handleCountChange(count - 1);
       }
+   };
+
+   const showModal = () => {
+      setIsModalVisible(true);
+   };
+
+   const handleOk = () => {
+      setIsModalVisible(false);
+   };
+
+   const handleCancel = () => {
+      setIsModalVisible(false);
    };
 
    return (
@@ -70,7 +96,10 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                         <span>Shower</span>
                      </div>
                   </div>
-                  <div className="text-blue-600 cursor-pointer">
+                  <div
+                     className="text-blue-600 cursor-pointer"
+                     onClick={showModal}
+                  >
                      View room details
                   </div>
                </div>
@@ -80,16 +109,16 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                   <table className="min-w-full bg-white border border-gray-200">
                      <thead className="bg-gray-100">
                         <tr>
-                           <th className="py-2 px-4 text-lg font-semibold text-left border-r border-b border-gray-200">
+                           <th className="py-2 px-4 text-md font-semibold text-left border-r border-b border-gray-200">
                               Room Options
                            </th>
-                           <th className="py-2 px-4 text-lg font-semibold text-left border-r border-b border-gray-200">
+                           <th className="py-2 px-4 text-md font-semibold text-left border-r border-b border-gray-200">
                               Guests
                            </th>
-                           <th className="py-2 px-4 text-lg font-semibold text-left border-r border-b border-gray-200">
+                           <th className="py-2 px-4 text-md font-semibold text-left border-r border-b border-gray-200">
                               Price/night
                            </th>
-                           <th className="py-2 px-4 text-lg font-semibold text-left border-b border-gray-200">
+                           <th className="py-2 px-4 text-md font-semibold text-left border-b border-gray-200">
                               Quantity
                            </th>
                         </tr>
@@ -97,7 +126,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                      <tbody>
                         <tr>
                            <td className="py-2 px-4 border-r border-gray-200">
-                              <div className="flex flex-col gap-1">
+                              <div className="flex flex-col gap-1 text-sm">
                                  <h5 className="font-medium">
                                     {roomOption.roomType}
                                  </h5>
@@ -125,11 +154,10 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                            </td>
                            <td className="py-2 px-4 border-r border-gray-200">
                               <div className="flex flex-col items-center">
-                                 <p>{roomOption.price.toLocaleString()} VND</p>
-                                 <p className="text-lg font-bold">
+                                 <p className="text-md font-bold">
                                     {roomOption.totalPrice.toLocaleString()} VND
                                  </p>
-                                 <p className="text-gray-500">
+                                 <p className="text-gray-500 text-sm">
                                     Including taxes and fees
                                  </p>
                               </div>
@@ -229,12 +257,12 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                            {roomOption.totalPrice.toLocaleString()} VND
                         </span>
                      </div>
-                     <div className="flex justify-between">
+                     {/* <div className="flex justify-between">
                         <span>Cancellation Policy:</span>
                         <span>
                            Free cancellation before June 23, 2024, 12:59
                         </span>
-                     </div>
+                     </div> */}
                      <div className="flex justify-between">
                         <span>Payment Method:</span>
                         <span className="text-blue-600">Pay at the hotel</span>
@@ -244,7 +272,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                         <span>1 Double Bed</span>
                      </div>
                      <div className="flex flex-col items-center mt-4">
-                        <div className="flex justify-between items-center gap-x-3 w-full">
+                        <div className="flex justify-between items-center gap-x-3 w-full max-w-[240px]">
                            <button
                               type="button"
                               className={`size-8 inline-flex justify-center items-center gap-x-2 text-base font-medium rounded-full border bg-white text-gray-800 shadow-sm hover:bg-gray-50 ${
@@ -311,6 +339,21 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                </div>
             </div>
          </div>
+         <Modal
+            title="Room Details"
+            open={isModalVisible}
+            onOk={handleOk}
+            onCancel={handleCancel}
+            width="50%"
+            footer={null}
+            styles={{
+               mask: {
+                  backdropFilter: 'blur(5px)',
+               },
+            }}
+         >
+            <RoomInfo roomInfo={roomOption} />
+         </Modal>
       </div>
    );
 };

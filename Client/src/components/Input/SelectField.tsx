@@ -22,7 +22,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
    options,
    onChangeSelected,
 }) => {
-   const { control } = useFormContext();
+   const { control, clearErrors } = useFormContext();
+   const isRequired = rules?.['required'];
 
    return (
       <Controller
@@ -30,49 +31,34 @@ const SelectField: React.FC<SelectFieldProps> = ({
          name={name}
          rules={rules}
          render={({ field, fieldState: { error } }) => (
-            <div>
-               <div
-                  className={clsx(
-                     'relative border border-gray-400 rounded-md transition-all px-2 select-none',
-                     {
-                        'border-green-700': field.value || field.value === 0,
-                     },
-                  )}
+            <div className={clsx('mb-4', className)}>
+               <label
+                  htmlFor={name}
+                  className="block text-sm font-normal text-gray-700 mb-1"
                >
-                  <Select
-                     {...field}
-                     className={clsx(
-                        'font-main text-lg h-16 w-full z-10',
-                        className,
-                     )}
-                     onChange={(value) => {
-                        field.onChange(value);
-                        onChangeSelected && onChangeSelected(value);
-                     }}
-                     showSearch={true}
-                     optionFilterProp="label"
-                     value={field.value || undefined}
-                     variant="borderless"
-                  >
-                     {options.map((option) => (
-                        <Option key={option.value} value={option.value}>
-                           {option.label}
-                        </Option>
-                     ))}
-                  </Select>
-                  <label
-                     className={clsx(
-                        'text-md absolute left-5 transform -translate-y-1/2 text-gray-600 transition-all duration-200',
-                        'top-1/2',
-                        {
-                           'text-sm transform -translate-y-8':
-                              field.value || field.value === 0,
-                        },
-                     )}
-                  >
-                     {label}
-                  </label>
-               </div>
+                  {label}
+                  {isRequired && <span className="text-red-600"> *</span>}
+               </label>
+               <Select
+                  {...field}
+                  className="w-full"
+                  onChange={(value) => {
+                     field.onChange(value);
+                     onChangeSelected && onChangeSelected(value);
+                     clearErrors(name);
+                  }}
+                  showSearch={true}
+                  optionFilterProp="label"
+                  value={field.value || undefined}
+                  size="large"
+                  status={error && 'error'}
+               >
+                  {options.map((option) => (
+                     <Option key={option.value} value={option.value}>
+                        {option.label}
+                     </Option>
+                  ))}
+               </Select>
                {error && (
                   <span className="text-red-600 text-sm">{error.message}</span>
                )}

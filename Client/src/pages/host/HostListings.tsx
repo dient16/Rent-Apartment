@@ -1,105 +1,103 @@
 import React from 'react';
-import { Table, Button } from 'antd';
+import { Table, Button, Typography, Space, Divider } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { path } from '@/utils/constant';
+import { apiGetApartmentByUser } from '@/apis';
 
-interface RentalItem {
-   key: string;
-   image: string;
-   title: string;
-   location: string;
-   rooms: string;
-}
-
-const data: RentalItem[] = [
-   {
-      key: '1',
-      image: 'https://via.placeholder.com/50', // Replace with actual image URL
-      title: 'Charming Cottage in Hoi An',
-      location: 'Hoi An, Quang Nam',
-      rooms: '3',
-   },
-   {
-      key: '2',
-      image: 'https://via.placeholder.com/50', // Replace with actual image URL
-      title: 'Modern Apartment in HCM City',
-      location: 'Vo Thi Sau Ward, Ho Chi Minh City',
-      rooms: '2',
-   },
-   {
-      key: '3',
-      image: 'https://via.placeholder.com/50', // Replace with actual image URL
-      title: 'Luxurious Condo in Singapore',
-      location: 'Singapore',
-      rooms: '4',
-   },
-   {
-      key: '4',
-      image: 'https://via.placeholder.com/50', // Replace with actual image URL
-      title: 'Beachfront Villa in Da Nang',
-      location: 'Thanh Khe, Da Nang',
-      rooms: '5',
-   },
-];
+const { Title } = Typography;
 
 const RentalListPage: React.FC = () => {
    const navigate = useNavigate();
-
-   const navigateToRooms = (apartmentId: string) => {
-      navigate(`/apartment-rooms/${apartmentId}`);
-   };
 
    const navigateToCreateApartment = () => {
       navigate(`${path.HOST_ROOT}${path.CREATE_APARTMENT}`);
    };
 
+   const { data, isLoading } = useQuery({
+      queryKey: ['rentals'],
+      queryFn: apiGetApartmentByUser,
+   });
+
+   const handleViewDetails = (id: string) => {
+      navigate(`${path.HOST_ROOT}apartment-rooms/${id}`);
+   };
+
    const columns = [
       {
-         title: 'Rental Item',
-         dataIndex: 'image',
-         key: 'image',
-         render: (text: string, record: RentalItem) => (
-            <img
-               src={text}
-               alt={record.title}
-               style={{ width: 50, height: 50 }}
-            />
-         ),
+         title: 'No.',
+         key: 'index',
+         render: (_, __, index: number) => index + 1,
+         width: '5%',
       },
       {
          title: 'Title',
          dataIndex: 'title',
          key: 'title',
+         width: '25%',
       },
       {
          title: 'Location',
          dataIndex: 'location',
          key: 'location',
+         width: '40%',
       },
       {
          title: 'Rooms',
          dataIndex: 'rooms',
          key: 'rooms',
-         render: (rooms: string, record: RentalItem) => (
-            <Button type="link" onClick={() => navigateToRooms(record.key)}>
-               {rooms}
-            </Button>
+         width: '10%',
+      },
+      {
+         title: 'Actions',
+         key: 'actions',
+         render: (_, record) => (
+            <Space>
+               <Button
+                  type="primary"
+                  className="bg-blue-500 hover:bg-blue-600"
+                  onClick={() => handleViewDetails(record.key)}
+               >
+                  View Details
+               </Button>
+            </Space>
          ),
+         width: '20%',
       },
    ];
 
+   const dataSource = (data?.data || []).map((apartment) => ({
+      key: apartment._id,
+      title: apartment.title,
+      location: `${apartment.location.street}, ${apartment.location.ward}, ${apartment.location.district}, ${apartment.location.province}`,
+      rooms: apartment.rooms.length,
+   }));
+
    return (
-      <div
-         className="container mx-auto mt-5"
-         style={{ fontFamily: 'YourFontName, sans-serif' }}
-      >
-         <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">Rental Listings</h1>
-            <Button type="primary" onClick={navigateToCreateApartment}>
-               Create New Apartment
-            </Button>
+      <div className="bg-gray-100">
+         <div className="max-w-main w-full mx-auto p-6  min-h-screen">
+            <div className="flex justify-between items-center mb-6">
+               <Title level={2} className="text-gray-800">
+                  Rental Listings
+               </Title>
+               <Button
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  type="primary"
+                  onClick={navigateToCreateApartment}
+               >
+                  Create New Apartment
+               </Button>
+            </div>
+            <Divider className="my-4" />
+            <Table
+               columns={columns}
+               loading={isLoading}
+               dataSource={dataSource}
+               rowKey="key"
+               pagination={{ pageSize: 10 }}
+               className="bg-white rounded-lg shadow-md"
+            />
          </div>
-         <Table columns={columns} dataSource={data} />
       </div>
    );
 };

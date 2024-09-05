@@ -33,7 +33,12 @@ const apartmentSchema = new Schema(
 );
 
 apartmentSchema.plugin(aggregatePaginate);
-
+apartmentSchema.index({
+  'location.province': 'text',
+  'location.district': 'text',
+  'location.ward': 'text',
+  'location.street': 'text',
+});
 const ApartmentModel = mongoose.model<Apartment & Document>('Apartment', apartmentSchema, 'apartments');
 
 export default ApartmentModel;

@@ -51,9 +51,17 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
             </Button>
          </div>
          <div className="lg:hidden mt-10">
-            <Carousel arrows={true} swipeToSlide draggable>
+            <Carousel
+               arrows={true}
+               swipeToSlide
+               draggable
+               className="rounded-2xl overflow-hidden"
+            >
                {images.map((image, index) => (
-                  <div key={index} className="w-full h-[250px] md:h-[400px]">
+                  <div
+                     key={index}
+                     className="w-full h-[200px] sm:h-[250px] md:h-[400px]"
+                  >
                      <Image
                         src={image}
                         width="100%"
@@ -76,7 +84,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
             <div className="grid grid-cols-3 gap-3">
                {images.map((image, index) => (
                   <div key={index} className="overflow-hidden rounded-2xl">
-                     <Image src={image} width="100%" />
+                     <Image src={image} width="100%" height={350} />
                   </div>
                ))}
             </div>

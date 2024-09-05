@@ -17,6 +17,7 @@ interface CustomDatePickerProps {
    isShowLeftIcon?: boolean;
    isShowRightIcon?: boolean;
    isShowNight?: boolean;
+   isBorder?: boolean;
    variant?: 'label' | 'button';
    format?: string;
 }
@@ -30,6 +31,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
    isShowLeftIcon = true,
    isShowRightIcon = true,
    isShowNight = true,
+   isBorder = true,
    format = 'DD MMM',
    variant = 'button',
 }) => {
@@ -37,9 +39,8 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
    const [popoverVisible, setPopoverVisible] = useState(false);
    const [dates, setDates] = useState<[Date, Date]>(value);
    const [selectingEndDate, setSelectingEndDate] = useState(false);
-   const isMobileOrTablet = useMediaQuery({ query: '(max-width: 768px)' });
+   const isMobileOrTablet = useMediaQuery({ query: '(max-width: 770px)' });
    const isMobile = useMediaQuery({ query: '(max-width: 440px)' });
-
    const handleDateChange = (ranges: RangeKeyDict) => {
       const selection = ranges.selection as Range;
       const newStartDate = selection.startDate as Date;
@@ -90,7 +91,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             disabledDates={disabledDates}
             minDate={minDate}
          />
-         <div className="flex justify-between items-center mt-4 pt-5 border-t bg-white lg:hidden px-2 pb-5 sm:p-5 w-full">
+         <div className="flex justify-between items-center pt-5 border-t bg-white lg:hidden px-2 pb-5 sm:p-5 w-full">
             <div className="flex flex-col">
                <span className="text-sm text-gray-500">Check-in</span>
                <span className="text-blue-600">
@@ -113,12 +114,12 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
          </div>
       </div>
    );
-
+   const Btn = isBorder ? Button : 'div';
    const renderButtonContent = () => (
       <>
          {variant === 'button' && (
-            <Button
-               className={`my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px] ${className}`}
+            <Btn
+               className={`my-2 flex gap-1 justify-center items-center w-full bg-white rounded-xl font-main h-[48px] ${className} cursor-pointer lg:hover:text-gray-400`}
                onClick={() => {
                   isMobileOrTablet
                      ? setDrawerVisible(true)
@@ -133,7 +134,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                   ? `, ${getNightCount(value[0], value[1])} nights`
                   : ''}
                {isShowRightIcon && <DownOutlined className="ml-2" />}
-            </Button>
+            </Btn>
          )}
          {variant === 'label' && (
             <div className="flex items-end ml-3 text-base font-medium gap-3 max-w-[280px] w-full justify-between">
@@ -201,8 +202,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             <Popover
                content={content}
                trigger="click"
-               placement="bottom"
-               overlayClassName="custom-popover"
+               placement="bottomLeft"
                open={popoverVisible}
                onOpenChange={setPopoverVisible}
             >

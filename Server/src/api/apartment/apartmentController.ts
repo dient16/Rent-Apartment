@@ -15,6 +15,14 @@ export const getAllApartment = async (_req: Request, res: Response, next: NextFu
     next(error);
   }
 };
+export const getUserApartments = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const serviceResponse = await apartmentService.getUserApartments(req.user._id);
+    handleServiceResponse(serviceResponse, res);
+  } catch (error) {
+    next(error);
+  }
+};
 export const getPopularRooms = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
@@ -104,10 +112,22 @@ export const removeRoomFromApartment = async (req: Request, res: Response, next:
   }
 };
 
-export const findRoomById = async (req: Request, res: Response, next: NextFunction) => {
+export const getRoomsCheckout = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { roomId } = req.params;
-    const serviceResponse = await apartmentService.findRoomById(roomId, req.query);
+    const roomIds: string[] = req.query.roomIds as string[];
+    const roomNumbers: string[] = req.query.roomNumbers as string[];
+
+    if (roomIds.length !== roomNumbers.length) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: ResponseStatus.Failed,
+        message: 'Mismatch between roomIds and roomNumbers length.',
+      });
+    }
+
+    const { roomIds: _roomIds, roomNumbers: _roomNumbers, ...query } = req.query;
+
+    const serviceResponse = await apartmentService.getRoomsCheckout(roomIds, roomNumbers, query);
+
     handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);

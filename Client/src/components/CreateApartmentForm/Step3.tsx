@@ -1,10 +1,10 @@
 import React from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
-import { Input, Select, Checkbox, TimePicker } from 'antd';
+import { Checkbox, TimePicker } from 'antd';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 
-const { TextArea } = Input;
-
+dayjs.extend(customParseFormat);
 const houseRulesOptions = [
    'No smoking',
    'No pets',
@@ -19,12 +19,6 @@ const safetyInfoOptions = [
    'Carbon monoxide detector',
    'Security cameras',
 ];
-const cancellationPolicyOptions = [
-   'Flexible',
-   'Moderate',
-   'Strict',
-   'Super Strict',
-];
 
 const Step3: React.FC = () => {
    const {
@@ -33,7 +27,7 @@ const Step3: React.FC = () => {
    } = useFormContext();
 
    return (
-      <div className="p-6 bg-white rounded-lg shadow-lg">
+      <div className="p-6 bg-white">
          <div className="mb-4">
             <label className="block text-lg font-medium mb-2">
                House Rules
@@ -68,7 +62,10 @@ const Step3: React.FC = () => {
                      format="HH:mm"
                      className="w-full p-2 border rounded"
                      value={field.value ? dayjs(field.value, 'HH:mm') : null}
-                     onChange={(time, timeString) => field.onChange(timeString)}
+                     onChange={(_time, timeString) =>
+                        field.onChange(timeString)
+                     }
+                     needConfirm={false}
                   />
                )}
             />
@@ -91,7 +88,10 @@ const Step3: React.FC = () => {
                      format="HH:mm"
                      className="w-full p-2 border rounded"
                      value={field.value ? dayjs(field.value, 'HH:mm') : null}
-                     onChange={(time, timeString) => field.onChange(timeString)}
+                     onChange={(_time, timeString) =>
+                        field.onChange(timeString)
+                     }
+                     needConfirm={false}
                   />
                )}
             />
@@ -119,48 +119,6 @@ const Step3: React.FC = () => {
             {errors.safetyInfo && (
                <span className="text-red-500">
                   Please select at least one safety information
-               </span>
-            )}
-         </div>
-         <div className="mb-4">
-            <label className="block text-lg font-medium mb-2">
-               Cancellation Policy
-            </label>
-            <Controller
-               name="cancellationPolicy"
-               control={control}
-               render={({ field }) => (
-                  <Select {...field} className="w-full p-2 border rounded">
-                     {cancellationPolicyOptions.map((option) => (
-                        <Select.Option key={option} value={option}>
-                           {option}
-                        </Select.Option>
-                     ))}
-                  </Select>
-               )}
-            />
-            {errors.cancellationPolicy && (
-               <span className="text-red-500">
-                  Please select a cancellation policy
-               </span>
-            )}
-         </div>
-         <div className="mb-4">
-            <label className="block text-lg font-medium mb-2">Discounts</label>
-            <Controller
-               name="discounts"
-               control={control}
-               render={({ field }) => (
-                  <TextArea
-                     {...field}
-                     rows={4}
-                     className="w-full p-2 border rounded"
-                  />
-               )}
-            />
-            {errors.discounts && (
-               <span className="text-red-500">
-                  Please enter discount details
                </span>
             )}
          </div>

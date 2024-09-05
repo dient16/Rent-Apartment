@@ -6,3 +6,5 @@ export { default as BookingCompletion } from './BookingCompletion';
 export { default as SetPassword } from './SetPassword';
 export { default as LoginSuccess } from './LoginSuccess';
 export { default as NotFound } from './NotFound';
+export { default as Contact } from './Contact';
+export { default as About } from './About';

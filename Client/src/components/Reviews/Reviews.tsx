@@ -18,7 +18,7 @@ interface RatingCategory {
 
 const sampleReviews: Review[] = [
    {
-      author: 'Mark M.',
+      author: 'Ella Nguyen',
       date: '20 September, 2022',
       rating: 10,
       title: 'Excellent value for the price!',
@@ -32,7 +32,7 @@ const sampleReviews: Review[] = [
       negatives: [],
    },
    {
-      author: 'Karena L.',
+      author: 'Long Tran',
       date: '10 September, 2022',
       rating: 5.6,
       title: 'Good hotel but noisy location',
@@ -90,7 +90,11 @@ const Reviews: React.FC = () => {
                {sampleReviews.map((review, index) => (
                   <div
                      key={index}
-                     className={`border-t pt-4 ${index < sampleReviews.length - 1 ? 'mb-4 border-none' : ''}`}
+                     className={`border-t pt-4 ${
+                        index < sampleReviews.length - 1
+                           ? 'mb-4 border-none'
+                           : ''
+                     }`}
                   >
                      <div className="flex justify-between items-center mb-1">
                         <h3 className="text-lg font-semibold">

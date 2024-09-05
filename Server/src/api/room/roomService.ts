@@ -6,11 +6,10 @@ import ApartmentModel from '@/api/apartment/apartmentModel';
 import Room from '@/api/room/roomModel';
 import type { CreateRoom, UpdateRoom } from '@/api/room/roomSchema';
 import { ResponseStatus, ServiceResponse } from '@/common/serviceResponse/serviceResponse';
-
+import { env } from '@/common/utils/envConfig';
+const { SERVER_URL } = env;
 export const roomService = {
   async addRoomToApartment(apartmentId: string, room: CreateRoom, session: mongoose.ClientSession) {
-    // __AUTO_GENERATED_PRINT_VAR_START__
-    console.log('addRoomToApartment room: %s', room); // __AUTO_GENERATED_PRINT_VAR_END__
     try {
       const amenities = room.amenities.map((amenity: any) => new Types.ObjectId(amenity));
 
@@ -107,5 +106,52 @@ export const roomService = {
     }
 
     return new ServiceResponse(ResponseStatus.Success, 'Room deleted successfully', deletedRoom, StatusCodes.OK);
+  },
+  async getRoomsByApartmentId(apartmentId: string) {
+    // Fetch apartment details (address and description)
+    const [apartmentErr, apartment] = await to(ApartmentModel.findById(apartmentId).lean().exec());
+
+    if (apartmentErr || !apartment) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'Error getting apartment details',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    // Fetch rooms for the apartment
+    const [err, rooms] = await to(Room.find({ apartmentId }).populate('amenities').lean().exec());
+
+    if (err) {
+      return new ServiceResponse(ResponseStatus.Failed, 'Error getting rooms', null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    if (!rooms || rooms.length === 0) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'No rooms found for this apartment.',
+        null,
+        StatusCodes.NOT_FOUND
+      );
+    }
+
+    // Update room images with full URLs
+    const updatedRooms = rooms.map((room) => ({
+      ...room,
+      images: room.images.map((image) => `${SERVER_URL}/api/image/${image}`),
+    }));
+
+    // Return the combined data: apartment details and rooms
+    return new ServiceResponse(
+      ResponseStatus.Success,
+      'Rooms retrieved successfully',
+      {
+        address: apartment.location,
+        description: apartment.description,
+        rooms: updatedRooms,
+      },
+      StatusCodes.OK
+    );
   },
 };

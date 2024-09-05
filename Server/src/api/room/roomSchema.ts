@@ -9,16 +9,15 @@ export const roomSchema = z.object({
   size: z.number(),
   price: z.number(),
   images: z.array(z.string()),
-  unavailableDateRanges: z
-    .array(
-      z.object({
-        startDay: z.date(),
-        endDay: z.date(),
-      })
-    )
-    .optional(),
+  unavailableDateRanges: z.array(
+    z.object({
+      startDay: z.date(),
+      endDay: z.date(),
+    })
+  ),
   roomType: z.string(),
   numberOfGuest: z.number(),
+  bedType: z.string().optional(),
   reviews: z
     .array(
       z.object({

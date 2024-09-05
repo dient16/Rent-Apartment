@@ -75,6 +75,32 @@ export const apartmentService = {
 
     return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
+  async getUserApartments(userId: string) {
+    const [err, apartments] = await to(
+      ApartmentModel.find({ owner: new Types.ObjectId(userId) })
+        .populate({
+          path: 'rooms.amenities',
+        })
+        .select('title location')
+        .exec()
+    );
+
+    if (err) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'Error getting user apartments',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    return new ServiceResponse(
+      ResponseStatus.Success,
+      'User apartments retrieved successfully',
+      apartments,
+      StatusCodes.OK
+    );
+  },
   async getPopularRooms(limit: number = 10) {
     const [err, rooms] = await to(
       RoomModel.aggregate([
@@ -342,21 +368,8 @@ export const apartmentService = {
     }
   },
   async searchApartments(query: any) {
-    const {
-      numberOfGuest,
-      roomNumber,
-      province,
-      district,
-      ward,
-      street,
-      startDate,
-      endDate,
-      name,
-      minPrice,
-      maxPrice,
-      limit,
-      page,
-    } = query;
+    const { numberOfGuest, roomNumber, province, district, startDate, endDate, name, minPrice, maxPrice, limit, page } =
+      query;
 
     const roomQuery = {
       numberOfGuest: { $gte: numberOfGuest },
@@ -385,7 +398,7 @@ export const apartmentService = {
 
     const apartmentIds = [...new Set(rooms.map((room) => room.apartmentId))];
 
-    const textSearchString = `${province || ''} ${district || ''} ${ward || ''} ${street || ''} ${name || ''}`.trim();
+    const textSearchString = `${province || ''} ${district || ''} ${name || ''}`.trim();
 
     const initialMatch = {
       $match: {
@@ -500,6 +513,7 @@ export const apartmentService = {
       (ApartmentModel as any).aggregatePaginate(ApartmentModel.aggregate(aggregation), options)
     );
     if (error) {
+      console.log(error);
       return new ServiceResponse(
         ResponseStatus.Failed,
         'Error searching apartments',
@@ -645,13 +659,15 @@ export const apartmentService = {
     );
   },
 
-  async findRoomById(roomId: string, query: any) {
-    const { start_date, end_date, room_number } = query;
+  async getRoomsCheckout(roomIds: string[], roomNumbers: string[], query: any) {
+    const { startDate, endDate } = query;
 
-    const roomIdObj = new mongoose.Types.ObjectId(roomId);
+    const roomIdsObj = roomIds.map((id) => new mongoose.Types.ObjectId(id));
 
-    const startDay = new Date(start_date);
-    const endDay = new Date(end_date);
+    const roomNumbersInt = roomNumbers.map((num) => parseInt(num, 10));
+
+    const startDay = new Date(startDate);
+    const endDay = new Date(endDate);
 
     if (Number.isNaN(startDay.getTime()) || Number.isNaN(endDay.getTime())) {
       return new ServiceResponse(ResponseStatus.Failed, 'Invalid start or end date', null, StatusCodes.BAD_REQUEST);
@@ -669,29 +685,7 @@ export const apartmentService = {
     }
 
     const pipeline = [
-      { $match: { _id: roomIdObj } },
-      {
-        $match: {
-          $or: [
-            {
-              unavailableDateRanges: {
-                $not: {
-                  $elemMatch: {
-                    startDay: { $lte: startDay },
-                    endDay: { $gte: endDay },
-                  },
-                },
-              },
-            },
-            { unavailableDateRanges: { $exists: false } },
-          ],
-        },
-      },
-      {
-        $match: {
-          quantity: { $gte: Number.parseInt(room_number, 10) || 1 },
-        },
-      },
+      { $match: { _id: { $in: roomIdsObj } } },
       {
         $lookup: {
           from: 'apartments',
@@ -701,12 +695,30 @@ export const apartmentService = {
         },
       },
       { $unwind: '$apartment' },
+
       {
-        $lookup: {
-          from: 'services',
-          localField: 'services',
-          foreignField: '_id',
-          as: 'services',
+        $addFields: {
+          matchingQuantity: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: {
+                    $zip: { inputs: [roomIdsObj, roomNumbersInt] },
+                  },
+                  as: 'pair',
+                  cond: { $eq: ['$$pair.0', '$_id'] },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $gte: ['$quantity', { $ifNull: [{ $arrayElemAt: ['$matchingQuantity.1', 0] }, 1] }],
+          },
         },
       },
       {
@@ -719,40 +731,47 @@ export const apartmentService = {
             price: '$price',
             size: '$size',
             roomType: '$roomType',
+            bedType: '$bedType',
             numberOfGuest: '$numberOfGuest',
             quantity: '$quantity',
             reviews: '$reviews',
-            services: {
-              $slice: [
-                {
-                  $map: {
-                    input: '$services',
-                    as: 'service',
-                    in: {
-                      title: '$$service.title',
-                      image: '$$service.image',
-                    },
-                  },
-                },
-                4,
-              ],
-            },
           },
         },
       },
-      { $limit: 1 },
+      { $limit: roomIds.length },
     ];
 
-    const result = await RoomModel.aggregate(pipeline).exec();
+    try {
+      const result = await RoomModel.aggregate(pipeline).exec();
 
-    if (!result || result.length === 0) {
-      return new ServiceResponse(ResponseStatus.Failed, 'Room not found or unavailable', null, StatusCodes.NOT_FOUND);
+      if (!result || result.length === 0) {
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'Rooms not found or unavailable',
+          null,
+          StatusCodes.NOT_FOUND
+        );
+      }
+
+      return new ServiceResponse(
+        ResponseStatus.Success,
+        'Rooms found',
+        {
+          title: result[0].title,
+          location: result[0].location,
+          rooms: result.map(({ room }) => room),
+        },
+        StatusCodes.OK
+      );
+    } catch (error) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'An error occurred while retrieving rooms',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
-
-    const { title, location, room } = result[0];
-    return new ServiceResponse(ResponseStatus.Success, 'Room found', { title, location, ...room }, StatusCodes.OK);
   },
-
   async createStripePayment(amount: number, description: string, source: string) {
     const stripe = new Stripe(STRIPE_SECRET_KEY);
     const [err, paymentIntent] = await to(
@@ -779,12 +798,13 @@ export const apartmentService = {
 
   async getApartmentsByUserId(userId: string) {
     const [err, apartments] = await to(
-      ApartmentModel.find({ createBy: userId }).select('title location rooms.images rooms.price').lean().exec()
+      ApartmentModel.find({ owner: userId }).select('title location rooms').lean().exec()
     );
 
     if (err) {
       return new ServiceResponse(ResponseStatus.Failed, err.message, null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
+
     if (!apartments || apartments.length === 0) {
       return new ServiceResponse(
         ResponseStatus.Failed,
@@ -794,21 +814,6 @@ export const apartmentService = {
       );
     }
 
-    const formattedApartments = apartments.map((apartment: any) => ({
-      title: apartment.title,
-      location: apartment.location,
-      image:
-        apartment.rooms?.length && apartment.rooms[0].images?.length
-          ? `${process.env.SERVER_URI}/api/image/${apartment.rooms[0].images[0]}`
-          : undefined,
-      price: apartment.rooms?.length ? apartment.rooms[0].price : undefined,
-    }));
-
-    return new ServiceResponse(
-      ResponseStatus.Success,
-      'Apartments retrieved successfully',
-      formattedApartments,
-      StatusCodes.OK
-    );
+    return new ServiceResponse(ResponseStatus.Success, 'Apartments retrieved successfully', apartments, StatusCodes.OK);
   },
 };

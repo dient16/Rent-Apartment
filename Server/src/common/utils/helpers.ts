@@ -16,7 +16,7 @@ interface JwtPayload {
   _id: string;
   isAdmin?: boolean;
 }
-const { JWT_ACCESS_KEY, JWT_REFRESH_KEY } = env;
+const { JWT_ACCESS_KEY, JWT_REFRESH_KEY, EMAIL_NAME, EMAIL_APP_PASSWORD } = env;
 
 export const generateToken = (): string => {
   return crypto.randomBytes(20).toString('hex');
@@ -72,8 +72,8 @@ export const sendMail = async ({ email, html, subject }: SendMailOptions): Promi
     port: 587,
     secure: false,
     auth: {
-      user: process.env.EMAIL_NAME,
-      pass: process.env.EMAIL_APP_PASSWORD,
+      user: EMAIL_NAME,
+      pass: EMAIL_APP_PASSWORD,
     },
   });
 
