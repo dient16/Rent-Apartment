@@ -137,8 +137,8 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             </Btn>
          )}
          {variant === 'label' && (
-            <div className="flex items-end ml-3 text-base font-medium gap-3 max-w-[280px] w-full justify-between">
-               <div>
+            <div className="flex items-end text-base font-medium md:gap-3 sm:gap-5 gap-2 max-w-[280px] w-full justify-around">
+               <div className="flex flex-col items-start gap-1">
                   <div>Check-in</div>
                   <div
                      className="text-lg font-normal cursor-pointer"
@@ -158,7 +158,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                <div className="pb-1">
                   <HiOutlineArrowLongRight />
                </div>
-               <div>
+               <div className="flex flex-col items-start gap-1">
                   <div>Check-out</div>
                   <div
                      className="text-lg font-normal cursor-pointer"

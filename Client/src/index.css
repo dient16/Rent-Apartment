@@ -36,12 +36,12 @@
 } */
 /* set width and height upload images */
 .upload-images .ant-upload-list-item-container {
-   width: 350px !important;
-   height: 320px !important;
+   width: 296px !important;
+   height: 300px !important;
 }
 .upload-images .ant-upload {
-   width: 350px !important;
-   height: 320px !important;
+   width: 296px !important;
+   height: 300px !important;
 }
 .custom-datepicker .rdrDefinedRangesWrapper {
    display: none;

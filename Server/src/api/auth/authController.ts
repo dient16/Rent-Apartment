@@ -3,7 +3,8 @@ import type { NextFunction, Request, Response } from 'express';
 import { handleServiceResponse } from '@/common/utils/httpHandlers';
 
 import { authService } from './authService';
-
+import { env } from '@/common/utils/envConfig';
+const { CLIENT_URL } = env;
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;
@@ -19,7 +20,8 @@ export const confirmEmail = async (req: Request, res: Response, next: NextFuncti
   try {
     const { token } = req.query as { token: string };
     const serviceResponse = await authService.confirmEmail(token);
-
+    const userId = serviceResponse?.data?._id;
+    if (userId) res.redirect(`${CLIENT_URL}/set-password/${userId}`);
     handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);

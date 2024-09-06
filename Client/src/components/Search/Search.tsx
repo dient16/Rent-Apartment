@@ -11,6 +11,7 @@ import { Controller, useForm } from 'react-hook-form';
 import moment from 'moment';
 import { useMediaQuery } from 'react-responsive';
 import { FaSearch } from 'react-icons/fa';
+import { MdOutlineBedroomParent } from 'react-icons/md';
 const { PiUserThin, FaArrowRight } = icons;
 
 const Search: React.FC = () => {
@@ -23,6 +24,9 @@ const Search: React.FC = () => {
    } = useForm();
    const navigate = useNavigate();
    const isMobileSmall = useMediaQuery({ query: '(max-width: 350px)' });
+   const isTablet = useMediaQuery({
+      query: '(min-width: 768px) and (max-width: 870px)',
+   });
    const handleSearch = (data: SearchData) => {
       const queryParams = new URLSearchParams({
          province: data.searchText,
@@ -36,7 +40,7 @@ const Search: React.FC = () => {
    return (
       <form
          onSubmit={handleSubmit(handleSearch)}
-         className="flex flex-wrap gap-3 justify-between items-center md:py-4 py-2 px-5 w-full bg-white rounded-3xl border lg:px-10 lg:rounded-full lg:shadow-lg font-main max-w-[960px] min-h-[50px] mt-[30px] shadow-card-sm"
+         className="grid gap-3 grid-cols-1 justify-between items-center md:flex md:py-4 py-2 px-5 w-full bg-white rounded-3xl border lg:px-10 lg:rounded-full lg:shadow-lg font-main max-w-[960px] min-h-[50px] mt-[30px] shadow-card-sm"
       >
          <Controller
             control={control}
@@ -57,7 +61,7 @@ const Search: React.FC = () => {
                      <span className="text-base font-medium">Where</span>
                      <input
                         placeholder="Where are you going?"
-                        className="py-0.5 text-lg bg-transparent outline-none lg:py-2"
+                        className="py-0.5 text-lg bg-transparent outline-none lg:py-1"
                         value={field.value}
                         onChange={(e) => {
                            field.onChange(e.target.value);
@@ -93,7 +97,9 @@ const Search: React.FC = () => {
                         value={field.value}
                         onChange={(dates) => field.onChange(dates)}
                         className="text-lg"
-                        format={isMobileSmall ? 'DD MMM' : 'DD-MM-YYYY'}
+                        format={
+                           isMobileSmall || isTablet ? 'DD MMM' : 'DD-MM-YYYY'
+                        }
                         variant="label"
                         minDate={new Date()}
                      />
@@ -128,13 +134,32 @@ const Search: React.FC = () => {
                         placement="bottomLeft"
                         trigger={['click']}
                      >
-                        <div className="flex gap-1 justify-center items-center text-lg text-black cursor-pointer lg:py-2 font-main">
-                           <PiUserThin size={20} />
-                           <span>{`${
-                              getValues('searchGuest')?.guests || 1
-                           } adult · ${
-                              getValues('searchGuest')?.rooms || 1
-                           } rooms`}</span>
+                        <div className="flex gap-1 justify-start items-center text-lg text-black cursor-pointer lg:py-1 font-main">
+                           {isTablet ? (
+                              <div className="flex items-center gap-2">
+                                 <div className="flex items-center gap-1">
+                                    <PiUserThin size={20} />
+                                    <span>
+                                       {getValues('searchGuest')?.guests || 1}
+                                    </span>
+                                 </div>
+                                 <div className="flex items-center gap-1">
+                                    <MdOutlineBedroomParent size={18} />
+                                    <span>
+                                       {getValues('searchGuest')?.rooms || 1}
+                                    </span>
+                                 </div>
+                              </div>
+                           ) : (
+                              <>
+                                 <PiUserThin size={20} />
+                                 <span>{`${
+                                    getValues('searchGuest')?.guests || 1
+                                 } adult · ${
+                                    getValues('searchGuest')?.rooms || 1
+                                 } rooms`}</span>
+                              </>
+                           )}
                         </div>
                      </Dropdown>
                   </div>
@@ -143,7 +168,7 @@ const Search: React.FC = () => {
          />
 
          <Button
-            className="sm:flex justify-center items-center bg-blue-500 text-white font-main hidden"
+            className="md:flex justify-center items-center bg-blue-500 text-white font-main hidden"
             shape="circle"
             type="primary"
             icon={<FaArrowRight size={24} />}
@@ -151,7 +176,7 @@ const Search: React.FC = () => {
             style={{ width: '48px', height: '48px', lineHeight: '48px' }}
          />
          <Button
-            className="flex justify-center items-center bg-blue-500 text-white font-main w-full sm:hidden"
+            className="flex justify-center items-center bg-blue-500 text-white font-main w-full md:hidden"
             type="primary"
             icon={<FaSearch />}
             htmlType="submit"

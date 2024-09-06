@@ -29,7 +29,7 @@ const ApartmentPopular: React.FC = () => {
    return (
       <div className="my-10 w-full">
          <div className="text-lg mb-5">Apartments loved by guest</div>
-         <div className="flex gap-5 items-center">
+         <div className="flex flex-wrap gap-5 items-center">
             {apartments.map((apartment) => (
                <div
                   key={apartment._id}

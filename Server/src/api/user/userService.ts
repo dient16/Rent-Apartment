@@ -5,7 +5,8 @@ import { logger } from '@/server';
 
 import UserModel from './userModel';
 import type { User } from './userSchema';
-
+import { env } from '@/common/utils/envConfig';
+const { SERVER_URL } = env;
 export const userService = {
   findAll: async (): Promise<ServiceResponse<User[] | null>> => {
     try {
@@ -29,8 +30,19 @@ export const userService = {
       if (!user) {
         return new ServiceResponse(ResponseStatus.Failed, 'User not found', null, StatusCodes.NOT_FOUND);
       }
-
-      return new ServiceResponse<User>(ResponseStatus.Success, 'User found', user, StatusCodes.OK);
+      let avatarUrl = user.avatar;
+      if (!avatarUrl?.startsWith('http')) {
+        avatarUrl = `${SERVER_URL}/api/image/${avatarUrl}`;
+      }
+      return new ServiceResponse<User>(
+        ResponseStatus.Success,
+        'User found',
+        {
+          ...user.toObject(),
+          avatar: avatarUrl,
+        },
+        StatusCodes.OK
+      );
     } catch (ex) {
       const errorMessage = `Error finding user with id ${id}: ${(ex as Error).message}`;
       logger.error(errorMessage);

@@ -12,7 +12,7 @@ import { env } from '@/common/utils/envConfig';
 import { generateAccessToken, generateRefreshToken, generateToken, sendMail } from '@/common/utils/helpers';
 
 const hashPassword = (password: string) => bcrypt.hashSync(password, bcrypt.genSaltSync(12));
-const { JWT_REFRESH_KEY } = env;
+const { JWT_REFRESH_KEY, SERVER_URL } = env;
 export const authService = {
   async register(email: string): Promise<ServiceResponse<User | null>> {
     const [errExistingUser, existingUser] = await to(UserModel.findOne({ email }));
@@ -53,7 +53,7 @@ export const authService = {
 
     const emailHtml = htmlTemplate.replace(
       '{{confirmationUrl}}',
-      `${process.env.SERVER_URI}/api/auth/confirm-email?token=${confirmationToken}`
+      `${SERVER_URL}/api/auth/confirm-email?token=${confirmationToken}`
     );
     const [mailError] = await to(sendMail({ email, html: emailHtml, subject: 'Confirm email' }));
     if (mailError) {

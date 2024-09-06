@@ -33,7 +33,7 @@ const Home: React.FC = () => {
       <div className="font-main flex items-center justify-center">
          <div className="max-w-main w-full px-3">
             <motion.div
-               className="md:h-[300px] h-[180px] w-full flex justify-center items-center rounded-3xl relative md:mt-3 bg-cover bg-center"
+               className="md:h-[300px] sm:h-[210px] h-[180px] w-full flex justify-center items-center rounded-3xl relative md:mt-3 bg-cover bg-center"
                style={{ backgroundImage: `url(${background})` }}
                initial="hidden"
                animate="visible"
@@ -50,16 +50,16 @@ const Home: React.FC = () => {
                      offer discounts
                   </div>
                </div>
-               <div className="absolute md:-bottom-9 -bottom-48 max-w-[960px] w-full">
+               <div className="absolute md:-bottom-9 sm:-bottom-40 -bottom-48 max-w-[960px] w-full">
                   <Search />
                </div>
             </motion.div>
 
             <div className="md:mt-[60px] mt-52">
                <div className="text-xl mb-5 ml-2">Popular destination</div>
-               <div className="lg:grid lg:h-[390px] lg:grid-cols-4 lg:grid-rows-5 lg:gap-5 flex flex-col gap-5">
+               <div className="lg:grid lg:h-[390px] lg:grid-cols-4 lg:grid-rows-5 lg:gap-5 sm:grid sm:grid-cols-2 sm:grid-rows-6 flex flex-col gap-5">
                   <div
-                     className="lg:col-span-1 row-span-5 relative cursor-pointer overflow-hidden rounded-2xl"
+                     className="lg:col-span-1 lg:row-span-5 sm:col-span-1 sm:row-span-4 relative cursor-pointer overflow-hidden rounded-2xl"
                      onClick={() => navigateToListing('Quy nhơn, Bình Định')}
                   >
                      <img
@@ -72,7 +72,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div
-                     className="col-span-1 row-span-3 relative cursor-pointer overflow-hidden rounded-2xl"
+                     className="lg:col-span-1 lg:row-span-3 sm:col-span-1 sm:row-span-2 relative cursor-pointer overflow-hidden rounded-2xl"
                      onClick={() => navigateToListing('Đà Lạt, Lâm Đồng')}
                   >
                      <img
@@ -85,7 +85,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div
-                     className="col-span-1 row-span-5 relative cursor-pointer overflow-hidden rounded-2xl"
+                     className="lg:col-span-1 lg:row-span-5 sm:col-span-1 sm:row-span-4 relative cursor-pointer overflow-hidden rounded-2xl"
                      onClick={() => navigateToListing('Đà Nẵng')}
                   >
                      <img
@@ -98,7 +98,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div
-                     className="col-span-1 row-span-2 relative cursor-pointer overflow-hidden rounded-2xl"
+                     className="lg:col-span-1 lg:row-span-2 sm:col-span-1 sm:row-span-2 relative cursor-pointer overflow-hidden rounded-2xl"
                      onClick={() => navigateToListing('Hồ Chí Minh')}
                   >
                      <img
@@ -109,8 +109,9 @@ const Home: React.FC = () => {
                         Ho Chi Minh
                      </span>
                   </div>
+
                   <div
-                     className="col-span-1 row-span-3 relative cursor-pointer overflow-hidden rounded-2xl"
+                     className="lg:col-span-1 lg:row-span-3 sm:col-span-1 sm:row-span-2 relative cursor-pointer overflow-hidden rounded-2xl"
                      onClick={() => navigateToListing('Hội An')}
                   >
                      <img
@@ -121,8 +122,9 @@ const Home: React.FC = () => {
                         Hoi An
                      </span>
                   </div>
+
                   <div
-                     className="col-span-1 row-span-2 relative cursor-pointer overflow-hidden rounded-2xl"
+                     className="lg:col-span-1 lg:row-span-2 sm:col-span-1 sm:row-span-2 relative cursor-pointer overflow-hidden rounded-2xl h-full"
                      onClick={() => navigateToListing('Nha Trang')}
                   >
                      <img
@@ -135,6 +137,7 @@ const Home: React.FC = () => {
                   </div>
                </div>
             </div>
+
             <ApartmentPopular />
          </div>
       </div>
