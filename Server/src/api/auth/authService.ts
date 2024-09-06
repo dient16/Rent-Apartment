@@ -41,7 +41,7 @@ export const authService = {
       );
     }
 
-    const [readError, htmlTemplate] = await to(fs.readFile('src/template/confirmMailTemplate.html', 'utf-8'));
+    const [readError, htmlTemplate] = await to(fs.readFile('templates/confirmMailTemplate.html', 'utf-8'));
     if (readError) {
       return new ServiceResponse(
         ResponseStatus.Failed,
