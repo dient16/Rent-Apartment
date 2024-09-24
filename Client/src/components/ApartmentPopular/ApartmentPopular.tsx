@@ -1,11 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Carousel, Skeleton } from 'antd';
+import { Carousel, Skeleton, Tooltip } from 'antd';
 import icons from '@/utils/icons';
 import { apiGetApartmentPopular } from '@/apis';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
-
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 const { IoHeartSharp, MdOutlineKeyboardArrowRight } = icons;
 
 const ApartmentPopular: React.FC = () => {
@@ -24,14 +25,29 @@ const ApartmentPopular: React.FC = () => {
       );
    }
 
-   const apartments = data.data;
+   const apartments = data?.data;
 
    return (
       <div className="my-10 w-full">
          <div className="text-lg mb-5">Apartments loved by guest</div>
-         <div className="flex flex-wrap gap-5 items-center">
-            {apartments.map((apartment) => (
-               <div
+         <Swiper
+            spaceBetween={30}
+            slidesPerView="auto"
+            navigation
+            pagination={{ clickable: true }}
+            className="my-swiper"
+            effect={'coverflow'}
+            grabCursor={true}
+            centeredSlides={true}
+            coverflowEffect={{
+               rotate: 0,
+               stretch: 0,
+               depth: 100,
+               modifier: 2.5,
+            }}
+         >
+            {(apartments || []).map((apartment) => (
+               <SwiperSlide
                   key={apartment._id}
                   className="w-[250px] h-[295px] flex flex-col items-start bg-white rounded-3xl shadow-card-sm p-2 cursor-pointer"
                >
@@ -75,11 +91,20 @@ const ApartmentPopular: React.FC = () => {
                      </span>
                   </div>
                   <div className="mt-2 p-1 w-full">
-                     <div className="text-lg">{apartment.title}</div>
-                     <div className="text-sm font-light truncate w-full">
-                        {apartment.location.district},{' '}
-                        {apartment.location.province}
-                     </div>
+                     <Tooltip title={apartment.title} placement="top">
+                        <div className="text-lg truncate">
+                           {apartment.title}
+                        </div>
+                     </Tooltip>
+                     <Tooltip
+                        title={`${apartment.location.district}, ${apartment.location.province}`}
+                        placement="top"
+                     >
+                        <div className="text-sm font-light truncate w-full">
+                           {apartment.location.district},{' '}
+                           {apartment.location.province}
+                        </div>
+                     </Tooltip>
                   </div>
                   <div className="flex items-center justify-between w-full">
                      <div className="text-md font-medium mt-1 p-1">
@@ -87,9 +112,9 @@ const ApartmentPopular: React.FC = () => {
                      </div>
                      <MdOutlineKeyboardArrowRight size={20} />
                   </div>
-               </div>
+               </SwiperSlide>
             ))}
-         </div>
+         </Swiper>
       </div>
    );
 };

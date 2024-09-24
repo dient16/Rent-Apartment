@@ -26,7 +26,8 @@
     "react-icons": "^4.11.0",
     "react-leaflet": "^4.2.1",
     "react-responsive": "^10.0.0",
-    "react-router-dom": "^6.17.0"
+    "react-router-dom": "^6.17.0",
+    "swiper": "^11.1.14"
   },
   "devDependencies": {
     "@jellydn/eslint-fixer": "^0.3.0",
