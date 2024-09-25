@@ -4,7 +4,7 @@ import { handleServiceResponse } from '@/common/utils/httpHandlers';
 
 import { authService } from './authService';
 import { env } from '@/common/utils/envConfig';
-const { CLIENT_URL } = env;
+const { CLIENT_URL, NODE_ENV } = env;
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;
@@ -46,7 +46,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       const { refreshToken } = serviceResponse.data;
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: NODE_ENV === 'production',
         maxAge: 7 * 24 * 60 * 60 * 1000,
         sameSite: 'strict',
       });
@@ -62,10 +62,7 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     const { refreshToken } = req.cookies;
     const serviceResponse = await authService.logout(refreshToken);
 
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: true,
-    });
+    res.clearCookie('refreshToken');
 
     handleServiceResponse(serviceResponse, res);
   } catch (error) {
@@ -92,12 +89,12 @@ export const googleLoginSuccess = async (req: Request, res: Response, next: Next
       const { refreshToken } = serviceResponse.data;
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: NODE_ENV === 'production',
         maxAge: 7 * 24 * 60 * 60 * 1000,
         sameSite: 'strict',
       });
+      handleServiceResponse(serviceResponse, res);
     }
-    handleServiceResponse(serviceResponse, res);
   } catch (error) {
     next(error);
   }

@@ -10,6 +10,9 @@ export interface ReducerHandler {
 const reducerHandlers: ReducerHandler = {
    INITIALIZE(state: AuthState, action: PayloadAction<AuthState>): AuthState {
       const { isAuthenticated, user, accessToken } = action.payload;
+      if (accessToken) {
+         localStorage.setItem('ACCESS_TOKEN', JSON.stringify(accessToken));
+      }
       return {
          ...state,
          isAuthenticated,

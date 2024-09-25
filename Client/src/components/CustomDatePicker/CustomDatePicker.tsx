@@ -39,7 +39,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
    const [popoverVisible, setPopoverVisible] = useState(false);
    const [dates, setDates] = useState<[Date, Date]>(value);
    const [selectingEndDate, setSelectingEndDate] = useState(false);
-   const isMobileOrTablet = useMediaQuery({ query: '(max-width: 770px)' });
+   const isMobileOrTablet = useMediaQuery({ query: '(max-width: 800px)' });
    const isMobile = useMediaQuery({ query: '(max-width: 440px)' });
    const handleDateChange = (ranges: RangeKeyDict) => {
       const selection = ranges.selection as Range;
