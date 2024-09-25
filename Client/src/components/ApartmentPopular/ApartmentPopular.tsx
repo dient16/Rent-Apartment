@@ -5,8 +5,6 @@ import icons from '@/utils/icons';
 import { apiGetApartmentPopular } from '@/apis';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
 const { IoHeartSharp, MdOutlineKeyboardArrowRight } = icons;
 
 const ApartmentPopular: React.FC = () => {
@@ -30,44 +28,14 @@ const ApartmentPopular: React.FC = () => {
    return (
       <div className="my-10 w-full">
          <div className="text-lg mb-5">Apartments loved by guest</div>
-         <Swiper
-            spaceBetween={30}
-            slidesPerView="auto"
-            navigation
-            pagination={{ clickable: true }}
-            className="my-swiper"
-            effect={'coverflow'}
-            grabCursor={true}
-            centeredSlides={true}
-            coverflowEffect={{
-               rotate: 0,
-               stretch: 0,
-               depth: 100,
-               modifier: 2.5,
-            }}
-         >
+         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {(apartments || []).map((apartment) => (
-               <SwiperSlide
+               <div
                   key={apartment._id}
-                  className="w-[250px] h-[295px] flex flex-col items-start bg-white rounded-3xl shadow-card-sm p-2 cursor-pointer"
+                  className="w-full h-[295px] flex flex-col items-start bg-white rounded-3xl shadow-card-sm p-2"
                >
                   <div className="relative w-full">
-                     <div
-                        className="rounded-3xl overflow-hidden"
-                        onClick={() =>
-                           navigate(
-                              `/apartment/${
-                                 apartment._id
-                              }?startDate=${moment().format(
-                                 'YYYY-MM-DD',
-                              )}&endDate=${moment()
-                                 .add(1, 'day')
-                                 .format(
-                                    'YYYY-MM-DD',
-                                 )}&numberOfGuest=1&roomNumber=1`,
-                           )
-                        }
-                     >
+                     <div className="rounded-3xl overflow-hidden">
                         <Carousel
                            arrows
                            swipeToSlide
@@ -92,7 +60,22 @@ const ApartmentPopular: React.FC = () => {
                   </div>
                   <div className="mt-2 p-1 w-full">
                      <Tooltip title={apartment.title} placement="top">
-                        <div className="text-lg truncate">
+                        <div
+                           className="text-lg truncate cursor-pointer hover:underline"
+                           onClick={() =>
+                              navigate(
+                                 `/apartment/${
+                                    apartment._id
+                                 }?startDate=${moment().format(
+                                    'YYYY-MM-DD',
+                                 )}&endDate=${moment()
+                                    .add(1, 'day')
+                                    .format(
+                                       'YYYY-MM-DD',
+                                    )}&numberOfGuest=1&roomNumber=1`,
+                              )
+                           }
+                        >
                            {apartment.title}
                         </div>
                      </Tooltip>
@@ -112,9 +95,9 @@ const ApartmentPopular: React.FC = () => {
                      </div>
                      <MdOutlineKeyboardArrowRight size={20} />
                   </div>
-               </SwiperSlide>
+               </div>
             ))}
-         </Swiper>
+         </div>
       </div>
    );
 };

@@ -171,9 +171,9 @@ const Search: React.FC = () => {
             className="md:flex justify-center items-center bg-blue-500 text-white font-main hidden"
             shape="circle"
             type="primary"
-            icon={<FaArrowRight size={24} />}
+            icon={<FaArrowRight size={35} />}
             htmlType="submit"
-            style={{ width: '48px', height: '48px', lineHeight: '48px' }}
+            style={{ width: '60px', height: '60px', lineHeight: '48px' }}
          />
          <Button
             className="flex justify-center items-center bg-blue-500 text-white font-main w-full md:hidden"

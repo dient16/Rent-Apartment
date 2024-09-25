@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import to from 'await-to-js';
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import UserModel from '@/api/user/userModel';
 import type { User } from '@/api/user/userSchema';
@@ -196,24 +196,39 @@ export const authService = {
   },
 
   async refreshAccessToken(refreshToken: string): Promise<ServiceResponse<{ accessToken: string } | null>> {
-    const decodedToken = jwt.verify(refreshToken, JWT_REFRESH_KEY) as { _id: string };
+    try {
+      const jwtToken = jwt.verify(refreshToken, JWT_REFRESH_KEY) as JwtPayload;
 
-    if (!decodedToken) {
-      return new ServiceResponse(ResponseStatus.Failed, 'Invalid refresh token', null, StatusCodes.UNAUTHORIZED);
+      if (!jwtToken?._id) {
+        return new ServiceResponse(ResponseStatus.Failed, 'Unauthorized request!!!', null, StatusCodes.UNAUTHORIZED);
+      }
+
+      const [errFindUser, user] = await to(UserModel.findOne({ _id: jwtToken._id, refreshToken }));
+
+      if (errFindUser || !user) {
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          'User not found or invalid refresh token',
+          null,
+          StatusCodes.UNAUTHORIZED
+        );
+      }
+
+      const newAccessToken = generateAccessToken(user._id, user.isAdmin);
+      return new ServiceResponse(
+        ResponseStatus.Success,
+        'Access token refreshed',
+        { accessToken: newAccessToken },
+        StatusCodes.OK
+      );
+    } catch (err) {
+      return new ServiceResponse(
+        ResponseStatus.Failed,
+        'Session has expired, please login again!!!',
+        null,
+        StatusCodes.UNAUTHORIZED
+      );
     }
-
-    const [errFindUser, user] = await to(UserModel.findOne({ _id: decodedToken._id, refreshToken }));
-    if (errFindUser || !user) {
-      return new ServiceResponse(ResponseStatus.Failed, 'Invalid refresh token', null, StatusCodes.UNAUTHORIZED);
-    }
-
-    const newAccessToken = generateAccessToken(user._id, user.isAdmin);
-    return new ServiceResponse(
-      ResponseStatus.Success,
-      'Access token refreshed',
-      { accessToken: newAccessToken },
-      StatusCodes.OK
-    );
   },
   async googleLoginSuccess(userId: string): Promise<ServiceResponse<User | null>> {
     const [errFindUser, user] = await to(UserModel.findById(userId));

@@ -31,3 +31,8 @@ export const apiRefreshToken = (): Promise<Res> =>
       url: '/auth/refresh-token',
       method: 'post',
    });
+export const apiLogout = (): Promise<Res> =>
+   axios({
+      url: '/auth/logout',
+      method: 'get',
+   });

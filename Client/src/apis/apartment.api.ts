@@ -61,7 +61,7 @@ export const apiGetApartmentByUser = (): Promise<Res> =>
    });
 export const apiGetApartmentPopular = (): Promise<Res> =>
    axios({
-      url: `/apartment/popular-rooms`,
+      url: `/apartment/popular-rooms?limit=10`,
       method: 'get',
    });
 export const apiGetRoomByApartmentId = (id: string): Promise<Res> =>

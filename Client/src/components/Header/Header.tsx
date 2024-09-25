@@ -31,6 +31,7 @@ const Header: React.FC<Props> = ({ isHost = false }) => {
       authModal,
       setAuthModal,
    } = useAuth();
+
    const tabItemsModal: TabsProps['items'] = [
       {
          key: 'signin',
@@ -139,7 +140,9 @@ const Header: React.FC<Props> = ({ isHost = false }) => {
                               size={30}
                               src={currentUser?.avatar}
                               className="border border-blue-500"
-                           />
+                           >
+                              {currentUser?.avatar}
+                           </Avatar>
                         </span>
                      </Popover>
                   )}

@@ -53,7 +53,7 @@ export const generateAccessToken = (uid: string, isAdmin: boolean): string => {
       isAdmin,
     } as JwtPayload,
     JWT_ACCESS_KEY as string,
-    { expiresIn: '7d' }
+    { expiresIn: '10s' }
   );
 };
 
@@ -63,7 +63,7 @@ export const generateRefreshToken = (uid: string): string => {
       _id: uid,
     } as JwtPayload,
     JWT_REFRESH_KEY as string,
-    { expiresIn: '365d' }
+    { expiresIn: '20s' }
   );
 };
 export const sendMail = async ({ email, html, subject }: SendMailOptions): Promise<nodemailer.SentMessageInfo> => {

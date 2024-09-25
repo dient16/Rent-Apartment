@@ -9,7 +9,6 @@ import * as controller from '@/api/auth/authController';
 import { userLoginSchema, userSignUpSchema } from '@/api/auth/authModel';
 import { UserSchema } from '@/api/user/userSchema';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
-import { verifyAccessToken } from '@/common/middleware/verifyToken';
 
 export const authRegistry = new OpenAPIRegistry();
 
@@ -61,7 +60,7 @@ authRegistry.registerPath({
   responses: createApiResponse(UserSchema, 'Success'),
 });
 
-router.get('/logout', verifyAccessToken, controller.logout);
+router.get('/logout', controller.logout);
 
 authRegistry.registerPath({
   method: 'post',
